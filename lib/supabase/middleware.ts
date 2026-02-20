@@ -76,6 +76,15 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Публичные маршруты - не требуют авторизации
+  const publicRoutes = ['/v/', '/api/leads', '/api/analytics', '/api/key/']
+  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  
+  // Если это публичный маршрут, пропускаем проверку авторизации
+  if (isPublicRoute) {
+    return supabaseResponse
+  }
+
   // Protect /admin routes (except login and register)
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const isLoginPage = request.nextUrl.pathname === '/admin/login'
