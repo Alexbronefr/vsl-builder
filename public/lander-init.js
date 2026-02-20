@@ -1951,12 +1951,27 @@
           // Задержка перед активацией для стабильности
           actionTimeout = setTimeout(processAction, 200);
         }
-        // Деактивация: когда видео возвращается в viewport (более 60% видно)
-        else if (ratio >= 0.6 && isSticky && !isProcessing) {
+        // Деактивация: когда видео возвращается в viewport (более 50% видно)
+        // Также проверяем позицию элемента - если он снова в нормальной позиции, деактивируем
+        else if (ratio >= 0.5 && isSticky && !isProcessing) {
           lastActionTime = now;
           pendingAction = 'deactivate';
           // Задержка перед деактивацией для стабильности
-          actionTimeout = setTimeout(processAction, 200);
+          actionTimeout = setTimeout(() => {
+            processAction();
+            // Дополнительная проверка: если видео снова видно в нормальной позиции, принудительно деактивируем
+            setTimeout(() => {
+              if (isSticky) {
+                const rect = videoContainer.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                // Если видео находится в верхней части экрана (вернулось на место), деактивируем
+                if (rect.top < viewportHeight * 0.8 && entry.isIntersecting) {
+                  console.log('Force deactivating sticky video - video is back in original position');
+                  deactivatePip();
+                }
+              }
+            }, 100);
+          }, 200);
         }
       });
     }, { 
