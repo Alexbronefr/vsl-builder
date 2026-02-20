@@ -99,6 +99,7 @@ export function LanderClient({
       height: 100%;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      z-index: 5;
     }
     
     #gif-preview-image {
@@ -150,6 +151,7 @@ export function LanderClient({
       width: 100%;
       height: 100%;
       object-fit: contain;
+      z-index: 1;
     }
     
     @media (max-width: 768px) {

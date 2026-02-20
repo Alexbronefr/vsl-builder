@@ -114,69 +114,116 @@
   // ========== GIF ПРЕВЬЮ ==========
   function initGifPreview() {
     const gifPreview = document.getElementById('gif-preview');
-    if (!gifPreview) return;
+    const gifPreviewImage = document.getElementById('gif-preview-image');
+    const gifPreviewOverlay = document.getElementById('gif-preview-overlay');
+    if (!gifPreview || !video) return;
 
     // Видео изначально скрыто
-    if (video) {
-      video.style.display = 'none';
-    }
+    video.style.display = 'none';
+    video.style.opacity = '0';
 
-    // Клик по GIF-превью
-    gifPreview.addEventListener('click', () => {
-      // Плавное исчезновение GIF-превью
+    // Функция для скрытия GIF и показа видео
+    const hideGifAndShowVideo = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('GIF preview clicked, hiding GIF and showing video');
+      console.log('Video element:', video);
+      console.log('Video readyState:', video?.readyState);
+      console.log('HLS instance:', hls);
+      
+      // Немедленно скрываем GIF-превью
       gifPreview.style.transition = 'opacity 300ms ease';
       gifPreview.style.opacity = '0';
+      gifPreview.style.pointerEvents = 'none';
+      gifPreview.style.zIndex = '0';
       
       setTimeout(() => {
         gifPreview.style.display = 'none';
         
         // Показываем видео
-        if (video) {
-          // Останавливаем видео, если оно уже играет
-          if (!video.paused) {
-            video.pause();
-          }
-          
-          // Сбрасываем на начало
-          video.currentTime = 0;
-          
-          video.style.display = 'block';
-          video.style.opacity = '0';
-          video.style.transition = 'opacity 300ms ease';
-          
-          // Плавное появление видео
-          setTimeout(() => {
-            video.style.opacity = '1';
-          }, 10);
-          
-          // Включаем звук
-          video.muted = false;
-          video.volume = 1;
-          
-          // Запускаем видео (HLS должен быть уже инициализирован в init())
-          // Ждём готовности видео перед запуском
-          const playVideoWhenReady = () => {
-            video.play().catch(err => {
-              console.error('Failed to play video:', err);
-              if (err.name === 'NotAllowedError') {
-                video.muted = true;
-                video.play().catch(() => {});
-              }
-            });
-          };
+        if (!video) {
+          console.error('Video element not found!');
+          return;
+        }
+        
+        // Останавливаем видео, если оно уже играет
+        if (!video.paused) {
+          video.pause();
+        }
+        
+        // Сбрасываем на начало
+        video.currentTime = 0;
+        
+        // Показываем видео элемент
+        video.style.display = 'block';
+        video.style.opacity = '0';
+        video.style.transition = 'opacity 300ms ease';
+        video.style.zIndex = '2';
+        video.style.position = 'absolute';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        
+        console.log('Video display set to block, z-index:', video.style.zIndex);
+        
+        // Плавное появление видео
+        setTimeout(() => {
+          video.style.opacity = '1';
+          console.log('Video opacity set to 1');
+        }, 10);
+        
+        // Включаем звук
+        video.muted = false;
+        video.volume = 1;
+        
+        // Запускаем видео
+        const playVideoWhenReady = () => {
+          console.log('Video ready, attempting to play. readyState:', video.readyState);
+          video.play().then(() => {
+            console.log('Video playing successfully');
+          }).catch(err => {
+            console.error('Failed to play video:', err);
+            if (err.name === 'NotAllowedError') {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          });
+        };
 
-          if (video.readyState >= 2) {
-            // Видео уже готово к воспроизведению
+        if (video.readyState >= 2) {
+          // Видео уже готово к воспроизведению
+          console.log('Video readyState >= 2, playing immediately');
+          playVideoWhenReady();
+        } else {
+          console.log('Video not ready, waiting for canplay/loadeddata');
+          // Ждём готовности видео
+          video.addEventListener('canplay', () => {
+            console.log('canplay event fired');
             playVideoWhenReady();
-          } else {
-            // Ждём готовности видео
-            video.addEventListener('canplay', playVideoWhenReady, { once: true });
-            // Также слушаем loadeddata на случай, если canplay не сработает
-            video.addEventListener('loadeddata', playVideoWhenReady, { once: true });
-          }
+          }, { once: true });
+          video.addEventListener('loadeddata', () => {
+            console.log('loadeddata event fired');
+            playVideoWhenReady();
+          }, { once: true });
+          // Также слушаем loadedmetadata на случай, если другие события не сработают
+          video.addEventListener('loadedmetadata', () => {
+            console.log('loadedmetadata event fired');
+            setTimeout(playVideoWhenReady, 100);
+          }, { once: true });
         }
       }, 300);
-    });
+    };
+
+    // Клик по GIF-превью (на любом элементе)
+    gifPreview.addEventListener('click', hideGifAndShowVideo);
+    if (gifPreviewImage) {
+      gifPreviewImage.addEventListener('click', hideGifAndShowVideo);
+    }
+    if (gifPreviewOverlay) {
+      gifPreviewOverlay.addEventListener('click', hideGifAndShowVideo);
+    }
   }
 
   // ========== HLS ПЛЕЕР ==========
