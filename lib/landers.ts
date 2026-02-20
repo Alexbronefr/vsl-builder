@@ -47,12 +47,26 @@ export async function getLanderById(id: string) {
 }
 
 export async function getLanderBySlug(slug: string) {
-  const supabase = await createClient()
+  // Для публичного доступа используем Service Role Key, чтобы обойти RLS
+  // и получить доступ к опубликованным лендингам
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+  
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
 
-  const { data, error } = await supabase
+  const { data, error } = await serviceSupabase
     .from('landers')
     .select('*')
     .eq('slug', slug)
+    .eq('status', 'published') // Только опубликованные лендинги
     .single()
 
   if (error) {
