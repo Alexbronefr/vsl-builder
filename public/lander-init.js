@@ -714,9 +714,98 @@
       padding: 5px;
     `;
 
+    // Fullscreen button
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.id = 'fullscreen-btn';
+    fullscreenBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 3H5C3.89543 3 3 3.89543 3 5V8M21 8V5C21 3.89543 20.1046 3 19 3H16M16 21H19C20.1046 21 21 20.1046 21 19V16M3 16V19C3 20.1046 3.89543 21 5 21H8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    fullscreenBtn.style.cssText = `
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    `;
+    fullscreenBtn.addEventListener('mouseenter', () => {
+      fullscreenBtn.style.opacity = '1';
+    });
+    fullscreenBtn.addEventListener('mouseleave', () => {
+      fullscreenBtn.style.opacity = '0.8';
+    });
+
+    // Fullscreen handlers
+    const enterFullscreen = () => {
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      } else if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+      } else if (video.mozRequestFullScreen) {
+        video.mozRequestFullScreen();
+      } else if (video.msRequestFullscreen) {
+        video.msRequestFullscreen();
+      }
+    };
+
+    const exitFullscreen = () => {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    };
+
+    const updateFullscreenIcon = () => {
+      const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      if (isFullscreen) {
+        fullscreenBtn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3V5C8 6.10457 8.89543 7 10 7H14C15.1046 7 16 6.10457 16 5V3M8 21V19C8 17.8954 8.89543 17 10 17H14C15.1046 17 16 17.8954 16 19V21M3 8H5C6.10457 8 7 8.89543 7 10V14C7 15.1046 6.10457 16 5 16H3M21 8H19C17.8954 8 17 8.89543 17 10V14C17 15.1046 17.8954 16 19 16H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+      } else {
+        fullscreenBtn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3H5C3.89543 3 3 3.89543 3 5V8M21 8V5C21 3.89543 20.1046 3 19 3H16M16 21H19C20.1046 21 21 20.1046 21 19V16M3 16V19C3 20.1046 3.89543 21 5 21H8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+      }
+    };
+
+    fullscreenBtn.addEventListener('click', () => {
+      const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      if (isFullscreen) {
+        exitFullscreen();
+      } else {
+        enterFullscreen();
+      }
+      sendAnalytics('fullscreen_toggle', { 
+        action: isFullscreen ? 'exit' : 'enter',
+        time: video.currentTime 
+      });
+    });
+
+    // Listen to fullscreen changes
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
     controlsContainer.appendChild(progressBar);
     controlsContainer.appendChild(timeDisplay);
     controlsContainer.appendChild(playPauseBtn);
+    controlsContainer.appendChild(fullscreenBtn);
     videoWrapper.appendChild(controlsContainer);
 
     // Обработчики
@@ -1044,6 +1133,11 @@
     // Sticky video on scroll
     if (lander.tricks_config?.sticky_video_on_scroll?.enabled) {
       initStickyVideo();
+    }
+
+    // Fullscreen prompt
+    if (lander.tricks_config?.fullscreen_prompt_mobile?.enabled) {
+      initFullscreenPrompt();
     }
 
     // Progressive content

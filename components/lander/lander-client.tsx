@@ -209,6 +209,28 @@ export function LanderClient({
       transition: opacity 0.15s, transform 0.2s;
     }
     
+    #fullscreen-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #fullscreen-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      #fullscreen-btn {
+        padding: 6px;
+      }
+      
+      #fullscreen-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+    
     #form-section {
       max-width: 600px;
       margin: 40px auto;
