@@ -154,6 +154,10 @@ export function LanderClient({
       z-index: 1;
     }
     
+    #player.showing {
+      z-index: 10;
+    }
+    
     @media (max-width: 768px) {
       #gif-preview-icon {
         width: 60px;

@@ -138,60 +138,68 @@
       console.log('Video readyState:', video?.readyState);
       console.log('HLS instance:', hls);
       
-      // Немедленно скрываем GIF-превью
-      gifPreview.style.transition = 'opacity 300ms ease';
+      // Немедленно останавливаем и скрываем GIF-превью
+      // Останавливаем GIF, установив src в пустую строку
+      if (gifPreviewImage) {
+        gifPreviewImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1x1 прозрачный пиксель
+        gifPreviewImage.style.display = 'none';
+      }
+      
+      // Немедленно скрываем весь GIF-превью контейнер
+      gifPreview.style.display = 'none';
       gifPreview.style.opacity = '0';
       gifPreview.style.pointerEvents = 'none';
       gifPreview.style.zIndex = '0';
+      gifPreview.style.visibility = 'hidden';
       
-      setTimeout(() => {
-        gifPreview.style.display = 'none';
-        
-        // Показываем видео
-        if (!video) {
-          console.error('Video element not found!');
-          return;
-        }
-        
-        // Останавливаем видео, если оно уже играет
-        if (!video.paused) {
-          video.pause();
-        }
-        
-        // Сбрасываем на начало
-        video.currentTime = 0;
-        
-        // Показываем видео элемент
-        video.style.display = 'block';
-        video.style.opacity = '0';
-        video.style.transition = 'opacity 300ms ease';
-        video.style.zIndex = '2';
-        // Убеждаемся, что видео правильно позиционировано
-        if (window.getComputedStyle(video).position === 'static') {
-          video.style.position = 'absolute';
-        }
-        video.style.top = '0';
-        video.style.left = '0';
-        video.style.width = '100%';
-        video.style.height = '100%';
-        
-        console.log('Video display set to block, z-index:', video.style.zIndex);
-        console.log('Video computed styles:', {
-          display: window.getComputedStyle(video).display,
-          position: window.getComputedStyle(video).position,
-          zIndex: window.getComputedStyle(video).zIndex,
-          opacity: window.getComputedStyle(video).opacity
-        });
-        
-        // Плавное появление видео
-        setTimeout(() => {
-          video.style.opacity = '1';
-          console.log('Video opacity set to 1');
-        }, 10);
-        
-        // Включаем звук
-        video.muted = false;
-        video.volume = 1;
+      // Удаляем обработчики событий, чтобы предотвратить повторные клики
+      gifPreview.removeEventListener('click', hideGifAndShowVideo);
+      if (gifPreviewImage) {
+        gifPreviewImage.removeEventListener('click', hideGifAndShowVideo);
+      }
+      if (gifPreviewOverlay) {
+        gifPreviewOverlay.removeEventListener('click', hideGifAndShowVideo);
+      }
+      
+      // Показываем видео
+      if (!video) {
+        console.error('Video element not found!');
+        return;
+      }
+      
+      // Останавливаем видео, если оно уже играет
+      if (!video.paused) {
+        video.pause();
+      }
+      
+      // Сбрасываем на начало
+      video.currentTime = 0;
+      
+      // Показываем видео элемент НЕМЕДЛЕННО
+      video.style.display = 'block';
+      video.style.visibility = 'visible';
+      video.style.opacity = '1';
+      video.style.zIndex = '10';
+      video.style.position = 'absolute';
+      video.style.top = '0';
+      video.style.left = '0';
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'contain';
+      video.classList.add('showing'); // Добавляем класс для дополнительного контроля через CSS
+      
+      console.log('Video display set to block, z-index:', video.style.zIndex);
+      console.log('Video computed styles:', {
+        display: window.getComputedStyle(video).display,
+        position: window.getComputedStyle(video).position,
+        zIndex: window.getComputedStyle(video).zIndex,
+        opacity: window.getComputedStyle(video).opacity,
+        visibility: window.getComputedStyle(video).visibility
+      });
+      
+      // Включаем звук
+      video.muted = false;
+      video.volume = 1;
         
         // Запускаем видео
         const playVideoWhenReady = () => {
@@ -272,7 +280,7 @@
             setTimeout(playVideoWhenReady, 100);
           }, { once: true });
         }
-      }, 300);
+      }, 0); // Убрали задержку, выполняем немедленно
     };
 
     // Клик по GIF-превью (на любом элементе)
