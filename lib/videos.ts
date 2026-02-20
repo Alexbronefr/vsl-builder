@@ -48,9 +48,22 @@ export async function getVideoById(id: string) {
 
 // Публичная функция для получения видео (без проверки team)
 export async function getVideoPublic(id: string) {
-  const supabase = await createClient()
+  // Для публичного доступа используем Service Role Key, чтобы обойти RLS
+  // и получить доступ к готовым видео
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+  
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
 
-  const { data, error } = await supabase
+  const { data, error } = await serviceSupabase
     .from('videos')
     .select('*')
     .eq('id', id)
