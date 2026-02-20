@@ -304,8 +304,18 @@ export function LanderClient({
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
+      white-space: normal;
+    }
+    
+    #viewers-counter .count-wrapper {
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    #viewers-counter .viewers-text {
+      white-space: nowrap;
     }
     
     .live-dot {
