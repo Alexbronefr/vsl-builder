@@ -50,8 +50,12 @@
       return;
     }
 
-    // Защита от скачивания
-    initProtection();
+    // Защита от скачивания (если включена)
+    if (lander.tricks_config?.protection?.enabled !== false) {
+      initProtection();
+    } else {
+      console.log('Protection disabled for testing');
+    }
 
     // Инициализация HLS плеера
     if (primaryVideo && primaryVideo.hls_manifest_url) {

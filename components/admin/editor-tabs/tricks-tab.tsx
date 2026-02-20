@@ -24,6 +24,25 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
 
   return (
     <div className="space-y-8">
+      {/* Protection (для тестирования) */}
+      <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-white">Защита от скачивания</h3>
+            <p className="text-sm text-gray-400">Отключите для тестирования (блокирует правую кнопку мыши и DevTools)</p>
+          </div>
+          <Switch
+            checked={tricksConfig?.protection?.enabled !== false}
+            onChange={(e) => updateTrick('protection', { enabled: e.target.checked })}
+          />
+        </div>
+        {tricksConfig?.protection?.enabled === false && (
+          <div className="rounded-md bg-yellow-900/20 border border-yellow-800 p-3 text-sm text-yellow-200">
+            ⚠️ Защита отключена. Вы можете использовать правую кнопку мыши и DevTools для тестирования.
+          </div>
+        )}
+      </div>
+
       {/* Social Proof */}
       <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-6">
         <div className="mb-4 flex items-center justify-between">
