@@ -138,7 +138,7 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
                           <input
                             type="checkbox"
                             checked={field.required}
-                            onChange={(e) =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               updateField(actualIndex, { required: e.target.checked })
                             }
                             className="rounded border-gray-600"
