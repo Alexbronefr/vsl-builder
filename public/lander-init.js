@@ -305,13 +305,35 @@
     };
 
     // Клик по GIF-превью (на любом элементе)
-    gifPreview.addEventListener('click', hideGifAndShowVideo);
+    const handleGifClick = (e) => {
+      console.log('=== GIF PREVIEW CLICKED ===');
+      console.log('Event:', e);
+      console.log('Target:', e.target);
+      console.log('Current target:', e.currentTarget);
+      hideGifAndShowVideo(e);
+    };
+    
+    gifPreview.addEventListener('click', handleGifClick, { capture: true });
     if (gifPreviewImage) {
-      gifPreviewImage.addEventListener('click', hideGifAndShowVideo);
+      gifPreviewImage.addEventListener('click', handleGifClick, { capture: true });
     }
     if (gifPreviewOverlay) {
-      gifPreviewOverlay.addEventListener('click', hideGifAndShowVideo);
+      gifPreviewOverlay.addEventListener('click', handleGifClick, { capture: true });
     }
+    
+    // Также добавляем обработчик на весь контейнер для надежности
+    const videoWrapper = document.getElementById('video-wrapper');
+    if (videoWrapper) {
+      videoWrapper.addEventListener('click', (e) => {
+        // Проверяем, что клик был именно по GIF preview
+        if (gifPreview.contains(e.target) && window.getComputedStyle(gifPreview).display !== 'none') {
+          console.log('GIF click detected via video-wrapper');
+          handleGifClick(e);
+        }
+      }, { capture: true });
+    }
+    
+    console.log('GIF preview click handlers attached');
   }
 
   // ========== HLS ПЛЕЕР ==========
