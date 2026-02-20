@@ -523,7 +523,7 @@ export function LanderClient({
               <span className="count-wrapper">
                 <span className="count">200</span>
               </span>
-              <span className="viewers-text">человек смотрят сейчас</span>
+              <span className="viewers-text">&nbsp;человек смотрят сейчас</span>
             </div>
           )}
 
