@@ -1910,6 +1910,8 @@
     let actionTimeout = null;
     const DEBOUNCE_DELAY = 500; // Увеличена задержка до 500мс
     let isProcessing = false; // Флаг для предотвращения параллельных действий
+    let lastScrollY = window.scrollY;
+    let scrollCheckTimeout = null;
     
     const processAction = () => {
       if (isProcessing) return;
@@ -1925,6 +1927,31 @@
       }
       
       pendingAction = null;
+    };
+    
+    // Функция для проверки, нужно ли деактивировать при скролле вверх
+    const checkScrollUp = () => {
+      if (!isSticky) return;
+      
+      const currentScrollY = window.scrollY;
+      const isScrollingUp = currentScrollY < lastScrollY;
+      lastScrollY = currentScrollY;
+      
+      if (isScrollingUp) {
+        // При скролле вверх проверяем позицию видео
+        const rect = videoContainer.getBoundingClientRect();
+        const placeholderRect = placeholder ? placeholder.getBoundingClientRect() : null;
+        
+        // Если placeholder виден (видео должно быть на месте), деактивируем
+        if (placeholderRect && placeholderRect.top < window.innerHeight * 0.7) {
+          console.log('Scrolling up detected, deactivating sticky video');
+          if (!isProcessing) {
+            isProcessing = true;
+            deactivatePip();
+            setTimeout(() => { isProcessing = false; }, 100);
+          }
+        }
+      }
     };
     
     const observer = new IntersectionObserver((entries) => {
@@ -1951,35 +1978,28 @@
           // Задержка перед активацией для стабильности
           actionTimeout = setTimeout(processAction, 200);
         }
-        // Деактивация: когда видео возвращается в viewport (более 50% видно)
-        // Также проверяем позицию элемента - если он снова в нормальной позиции, деактивируем
-        else if (ratio >= 0.5 && isSticky && !isProcessing) {
+        // Деактивация: когда видео возвращается в viewport (более 40% видно - снижен порог)
+        else if (ratio >= 0.4 && isSticky && !isProcessing) {
           lastActionTime = now;
           pendingAction = 'deactivate';
           // Задержка перед деактивацией для стабильности
-          actionTimeout = setTimeout(() => {
-            processAction();
-            // Дополнительная проверка: если видео снова видно в нормальной позиции, принудительно деактивируем
-            setTimeout(() => {
-              if (isSticky) {
-                const rect = videoContainer.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                // Если видео находится в верхней части экрана (вернулось на место), деактивируем
-                if (rect.top < viewportHeight * 0.8 && entry.isIntersecting) {
-                  console.log('Force deactivating sticky video - video is back in original position');
-                  deactivatePip();
-                }
-              }
-            }, 100);
-          }, 200);
+          actionTimeout = setTimeout(processAction, 100);
         }
       });
     }, { 
-      threshold: [0, 0.2, 0.6, 1.0], // Более четкие пороги
-      rootMargin: '50px' // Добавляем отступ для более плавной работы
+      threshold: [0, 0.2, 0.4, 0.6, 1.0], // Более детальные пороги
+      rootMargin: '100px' // Увеличен отступ для более раннего обнаружения
     });
 
     observer.observe(videoContainer);
+    
+    // Дополнительная проверка при скролле
+    window.addEventListener('scroll', () => {
+      if (scrollCheckTimeout) {
+        clearTimeout(scrollCheckTimeout);
+      }
+      scrollCheckTimeout = setTimeout(checkScrollUp, 100);
+    }, { passive: true });
 
     // Обработка паузы: если видео на паузе и скроллим - НЕ активировать PiP
     if (video) {
