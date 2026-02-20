@@ -355,6 +355,25 @@
     }
     
     console.log('GIF preview click handlers attached');
+    
+    // Тестовая функция для проверки кликабельности (можно вызвать из консоли)
+    window.testGifPreview = () => {
+      console.log('=== TESTING GIF PREVIEW ===');
+      console.log('GIF preview element:', gifPreview);
+      console.log('GIF preview visible:', window.getComputedStyle(gifPreview).display !== 'none');
+      console.log('GIF preview clickable:', window.getComputedStyle(gifPreview).pointerEvents !== 'none');
+      console.log('Video element:', video);
+      console.log('Video visible:', window.getComputedStyle(video).display !== 'none');
+      console.log('HLS instance:', hls);
+      
+      // Пробуем программно кликнуть
+      if (gifPreview) {
+        console.log('Attempting programmatic click...');
+        gifPreview.click();
+      }
+    };
+    
+    console.log('Type window.testGifPreview() in console to test GIF preview');
   }
 
   // ========== HLS ПЛЕЕР ==========
