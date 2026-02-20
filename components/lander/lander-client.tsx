@@ -298,7 +298,9 @@ export function LanderClient({
     #viewers-counter {
       text-align: center;
       padding: 20px;
-      margin-bottom: 32px;
+      margin: 0 auto 32px auto;
+      max-width: 100%;
+      width: 100%;
       color: rgba(255, 255, 255, 0.7);
       font-size: 14px;
       display: flex;
@@ -307,6 +309,9 @@ export function LanderClient({
       gap: 8px;
       flex-wrap: wrap;
       white-space: normal;
+      position: relative;
+      left: 0;
+      right: 0;
     }
     
     #viewers-counter .count-wrapper {

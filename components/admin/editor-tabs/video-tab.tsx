@@ -35,17 +35,37 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   }
 
   const parseTime = (timeStr: string) => {
-    // Поддерживаем формат "мм:сс" или "м:сс" (например, "0:30" или "1:30")
-    const parts = timeStr.split(':')
-    if (parts.length !== 2) return null
+    // Убираем пробелы
+    timeStr = timeStr.trim()
     
-    const mins = parseInt(parts[0]) || 0
-    const secs = parseInt(parts[1]) || 0
+    // Поддерживаем формат "мм:сс", "м:сс", "00:сс" (например, "0:30", "00:30", "1:30")
+    const parts = timeStr.split(':')
+    if (parts.length !== 2) {
+      // Пробуем распарсить как просто число (секунды)
+      const numSeconds = parseInt(timeStr)
+      if (!isNaN(numSeconds) && numSeconds >= 0) {
+        return numSeconds
+      }
+      return null
+    }
+    
+    const minsStr = parts[0].trim()
+    const secsStr = parts[1].trim()
+    
+    // Парсим минуты и секунды
+    const mins = parseInt(minsStr) || 0
+    const secs = parseInt(secsStr) || 0
     
     // Проверяем, что секунды в допустимом диапазоне (0-59)
     if (secs < 0 || secs > 59) return null
     
-    return mins * 60 + secs
+    // Проверяем, что минуты не отрицательные
+    if (mins < 0) return null
+    
+    const totalSeconds = mins * 60 + secs
+    
+    // Разрешаем любое значение >= 0 (включая 0:30 = 30 секунд)
+    return totalSeconds
   }
 
   const handleGifUpload = async (file: File) => {
@@ -183,7 +203,14 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
           type="text"
           value={timeStr}
           onChange={(e) => {
-            const seconds = parseTime(e.target.value)
+            const value = e.target.value
+            // Разрешаем ввод во время набора (например, "0:", "00:", "0:3")
+            if (value === '' || value.endsWith(':')) {
+              // Показываем значение как есть, но не обновляем до завершения ввода
+              return
+            }
+            
+            const seconds = parseTime(value)
             if (seconds !== null && seconds >= 0) {
               onUpdate({ form_show_time_seconds: seconds })
             }
