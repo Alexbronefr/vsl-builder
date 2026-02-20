@@ -126,7 +126,7 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
                       <div className="ml-10 flex gap-4">
                         <Select
                           value={field.type}
-                          onChange={(e) => updateField(actualIndex, { type: e.target.value })}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField(actualIndex, { type: e.target.value })}
                           className="w-32"
                         >
                           <option value="text">Текст</option>
