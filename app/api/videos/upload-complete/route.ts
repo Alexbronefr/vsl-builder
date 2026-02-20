@@ -47,6 +47,30 @@ export async function POST(request: NextRequest) {
       })
       
       try {
+        // Проверяем наличие R2 конфигурации
+        const r2Config = {
+          endpoint: process.env.R2_ENDPOINT,
+          access_key_id: process.env.R2_ACCESS_KEY_ID,
+          secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
+          bucket: process.env.R2_BUCKET_NAME,
+        }
+        
+        console.log('[Video Upload] R2 config check:', {
+          hasEndpoint: !!r2Config.endpoint,
+          hasAccessKey: !!r2Config.access_key_id,
+          hasSecretKey: !!r2Config.secret_access_key,
+          hasBucket: !!r2Config.bucket,
+          bucketName: r2Config.bucket,
+        })
+        
+        if (!r2Config.bucket) {
+          throw new Error('R2_BUCKET_NAME environment variable is not set')
+        }
+        
+        if (!r2Config.endpoint || !r2Config.access_key_id || !r2Config.secret_access_key) {
+          throw new Error('R2 configuration is incomplete. Check R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY')
+        }
+        
         const conversionStartTime = Date.now()
         const conversionResponse = await fetch(`${conversionServiceUrl}/convert`, {
           method: 'POST',
@@ -62,12 +86,7 @@ export async function POST(request: NextRequest) {
               { name: '480p', width: 854, height: 480, bitrate: '1400k' },
               { name: '720p', width: 1280, height: 720, bitrate: '2800k' },
             ],
-            r2_config: {
-              endpoint: process.env.R2_ENDPOINT,
-              access_key_id: process.env.R2_ACCESS_KEY_ID,
-              secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
-              bucket: process.env.R2_BUCKET_NAME,
-            },
+            r2_config: r2Config,
           }),
         })
 
