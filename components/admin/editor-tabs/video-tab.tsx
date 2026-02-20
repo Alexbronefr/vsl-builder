@@ -35,8 +35,17 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   }
 
   const parseTime = (timeStr: string) => {
-    const [mins, secs] = timeStr.split(':').map(Number)
-    return (mins || 0) * 60 + (secs || 0)
+    // Поддерживаем формат "мм:сс" или "м:сс" (например, "0:30" или "1:30")
+    const parts = timeStr.split(':')
+    if (parts.length !== 2) return null
+    
+    const mins = parseInt(parts[0]) || 0
+    const secs = parseInt(parts[1]) || 0
+    
+    // Проверяем, что секунды в допустимом диапазоне (0-59)
+    if (secs < 0 || secs > 59) return null
+    
+    return mins * 60 + secs
   }
 
   const handleGifUpload = async (file: File) => {
@@ -175,15 +184,15 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
           value={timeStr}
           onChange={(e) => {
             const seconds = parseTime(e.target.value)
-            if (!isNaN(seconds)) {
+            if (seconds !== null && seconds >= 0) {
               onUpdate({ form_show_time_seconds: seconds })
             }
           }}
-          placeholder="25:00"
+          placeholder="0:30"
           className="mt-2"
         />
         <p className="mt-1 text-xs text-gray-500">
-          Формат: минуты:секунды (например, 25:00 = 25 минут)
+          Формат: минуты:секунды (например, 0:30 = 30 секунд, 1:00 = 1 минута, 25:00 = 25 минут)
         </p>
       </div>
 
