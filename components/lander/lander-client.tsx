@@ -336,13 +336,15 @@ export function LanderClient({
         />
         <Script id="lander-config" strategy="afterInteractive">
           {`
-            (window as any).landerConfig = ${JSON.stringify({
-              landerId: lander.id,
-              lander,
-              primaryVideo,
-              secondaryVideo,
-              sessionToken,
-            })};
+            if (typeof window !== 'undefined') {
+              window.landerConfig = ${JSON.stringify({
+                landerId: lander.id,
+                lander,
+                primaryVideo,
+                secondaryVideo,
+                sessionToken,
+              })};
+            }
           `}
         </Script>
         <Script
@@ -350,7 +352,8 @@ export function LanderClient({
           strategy="lazyOnload"
           onLoad={() => {
             // Убеждаемся, что конфиг установлен и скрипт загружен
-            if (typeof window !== 'undefined' && (window as any).landerConfig) {
+            // @ts-ignore
+            if (typeof window !== 'undefined' && window.landerConfig) {
               console.log('Lander init script loaded, config available');
             }
           }}
