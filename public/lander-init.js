@@ -1191,30 +1191,41 @@
     const config = lander.tricks_config.form_blur;
     const formShowTime = lander.video_config?.form_show_time_seconds || 1500;
 
-    // Устанавливаем начальный блюр 12px
-    formSection.style.filter = `blur(${config.blur_amount_px || 12}px)`;
+    console.log('Form blur initialized, formShowTime:', formShowTime, 'seconds');
+
+    // Устанавливаем начальный блюр через класс (не inline стили)
+    formSection.classList.add('blurred');
     formSection.style.pointerEvents = 'none';
     formSection.style.userSelect = 'none';
-    formSection.classList.add('blurred');
 
     if (video) {
       let handlerRemoved = false;
+      let blurRemoved = false;
       
-      video.addEventListener('timeupdate', function handler() {
-        if (handlerRemoved) return;
+      const checkTime = () => {
+        if (handlerRemoved || blurRemoved) return;
         
-        if (video.currentTime >= formShowTime) {
+        const currentTime = video.currentTime || 0;
+        console.log('Video time check:', currentTime, '>=', formShowTime, '?', currentTime >= formShowTime);
+        
+        if (currentTime >= formShowTime) {
           handlerRemoved = true;
-          video.removeEventListener('timeupdate', handler);
+          blurRemoved = true;
+          
+          console.log('Removing form blur at time:', currentTime);
 
-          // Плавное разблюривание
+          // Убираем блюр через класс
           formSection.classList.remove('blurred');
           formSection.classList.add('unblurring');
+          
+          // Убираем inline стили filter, если они есть
+          formSection.style.filter = 'blur(0px)';
           
           // Плавное возвращение pointer-events и user-select
           setTimeout(() => {
             formSection.style.pointerEvents = 'auto';
             formSection.style.userSelect = 'auto';
+            console.log('Form blur removed, form is now interactive');
           }, 1500); // После завершения анимации filter
 
           // Свечение затухает через 3 секунды
@@ -1243,7 +1254,22 @@
             navigator.vibrate(lander.tricks_config.micro_vibration.duration_ms || 50);
           }
         }
-      });
+      };
+      
+      // Проверяем сразу, если видео уже прошло нужное время
+      if (video.readyState >= 2) {
+        checkTime();
+      }
+      
+      // Слушаем timeupdate
+      video.addEventListener('timeupdate', checkTime);
+      
+      // Также слушаем loadedmetadata на случай, если видео уже загружено
+      video.addEventListener('loadedmetadata', () => {
+        if (!blurRemoved) {
+          checkTime();
+        }
+      }, { once: true });
     }
   }
 
@@ -1745,6 +1771,7 @@
       // Проверяем, что видео играет
       if (!video || video.paused) return;
 
+      console.log('Activating sticky video');
       saveOriginalStyles();
 
       // Создаём placeholder
@@ -1789,6 +1816,8 @@
     function deactivatePip() {
       if (!isSticky) return;
 
+      console.log('Deactivating sticky video');
+
       // Убираем кнопку закрытия
       if (closeButton) {
         closeButton.remove();
@@ -1816,19 +1845,34 @@
       isSticky = false;
     }
 
-    // IntersectionObserver
+    // IntersectionObserver с debounce для предотвращения моргания
+    let lastActionTime = 0;
+    const DEBOUNCE_DELAY = 300; // Минимальная задержка между действиями (мс)
+    
     const observer = new IntersectionObserver((entries) => {
+      const now = Date.now();
+      if (now - lastActionTime < DEBOUNCE_DELAY) {
+        return; // Пропускаем слишком частые срабатывания
+      }
+      
       entries.forEach(entry => {
+        const ratio = entry.intersectionRatio;
+        
         // Активация: когда менее 30% видео видно И видео играет
-        if (entry.intersectionRatio < 0.3 && video && !video.paused) {
+        if (ratio < 0.3 && video && !video.paused && !isSticky) {
+          lastActionTime = now;
           activatePip();
         }
-        // Деактивация: когда видео возвращается в viewport
-        else if (entry.intersectionRatio >= 0.3 && isSticky) {
+        // Деактивация: когда видео возвращается в viewport (более 50% видно для надежности)
+        else if (ratio >= 0.5 && isSticky) {
+          lastActionTime = now;
           deactivatePip();
         }
       });
-    }, { threshold: 0.3 });
+    }, { 
+      threshold: [0, 0.3, 0.5, 1.0], // Несколько порогов для более плавной работы
+      rootMargin: '0px' // Без отступов
+    });
 
     observer.observe(videoContainer);
 
