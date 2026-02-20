@@ -70,11 +70,6 @@
       return;
     }
 
-    // Инициализация GIF-превью (если есть)
-    if (lander.video_config?.gif_preview_url) {
-      initGifPreview();
-    }
-
     // Защита от скачивания (если включена)
     if (lander.tricks_config?.protection?.enabled !== false) {
       initProtection();
@@ -82,9 +77,15 @@
       console.log('Protection disabled for testing');
     }
 
-    // Инициализация HLS плеера
+    // Инициализация HLS плеера (делаем это ДО GIF-превью, чтобы HLS был готов)
     if (primaryVideo && primaryVideo.hls_manifest_url) {
       initHLSPlayer();
+    }
+
+    // Инициализация GIF-превью (если есть)
+    // Делаем ПОСЛЕ HLS, чтобы HLS уже был инициализирован
+    if (lander.video_config?.gif_preview_url) {
+      initGifPreview();
     }
 
     // Инициализация контролов
@@ -148,20 +149,31 @@
             video.style.opacity = '1';
           }, 10);
           
-          // Включаем звук и запускаем видео с начала
+          // Включаем звук
           video.muted = false;
           video.volume = 1;
           
-          // КРИТИЧНО: play() должен быть вызван внутри click handler (user gesture)
-          // Это позволяет запустить видео со звуком
-          video.play().catch(err => {
-            console.error('Failed to play video:', err);
-            // Если autoplay заблокирован, запускаем с muted
-            if (err.name === 'NotAllowedError') {
-              video.muted = true;
-              video.play().catch(() => {});
-            }
-          });
+          // Запускаем видео (HLS должен быть уже инициализирован в init())
+          // Ждём готовности видео перед запуском
+          const playVideoWhenReady = () => {
+            video.play().catch(err => {
+              console.error('Failed to play video:', err);
+              if (err.name === 'NotAllowedError') {
+                video.muted = true;
+                video.play().catch(() => {});
+              }
+            });
+          };
+
+          if (video.readyState >= 2) {
+            // Видео уже готово к воспроизведению
+            playVideoWhenReady();
+          } else {
+            // Ждём готовности видео
+            video.addEventListener('canplay', playVideoWhenReady, { once: true });
+            // Также слушаем loadeddata на случай, если canplay не сработает
+            video.addEventListener('loadeddata', playVideoWhenReady, { once: true });
+          }
         }
       }, 300);
     });

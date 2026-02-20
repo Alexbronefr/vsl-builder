@@ -298,7 +298,8 @@ export function LanderClient({
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
     
     .live-dot {
@@ -516,7 +517,7 @@ export function LanderClient({
               <span className="count-wrapper">
                 <span className="count">200</span>
               </span>
-              <span className="viewers-text"> человек смотрят сейчас</span>
+              <span className="viewers-text">человек смотрят сейчас</span>
             </div>
           )}
 
