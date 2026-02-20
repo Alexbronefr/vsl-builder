@@ -332,11 +332,11 @@ export function LanderClient({
         {/* HLS.js и инициализация лендинга */}
         <Script
           src="https://cdn.jsdelivr.net/npm/hls.js@latest"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
-        <Script id="lander-config" strategy="beforeInteractive">
+        <Script id="lander-config" strategy="afterInteractive">
           {`
-            window.landerConfig = ${JSON.stringify({
+            (window as any).landerConfig = ${JSON.stringify({
               landerId: lander.id,
               lander,
               primaryVideo,
@@ -350,7 +350,7 @@ export function LanderClient({
           strategy="lazyOnload"
           onLoad={() => {
             // Убеждаемся, что конфиг установлен и скрипт загружен
-            if (typeof window !== 'undefined' && window.landerConfig) {
+            if (typeof window !== 'undefined' && (window as any).landerConfig) {
               console.log('Lander init script loaded, config available');
             }
           }}
