@@ -129,12 +129,8 @@
     video.style.opacity = '0';
     video.style.visibility = 'hidden';
     
-    // Убеждаемся, что видео не имеет src (если HLS еще не инициализирован)
-    if (!hls && video.src) {
-      console.warn('Video has src before HLS init, clearing:', video.src);
-      video.removeAttribute('src');
-      video.src = '';
-    }
+    // Примечание: blob URL в src - это нормально для HLS.js после attachMedia
+    // HLS.js использует blob URL для внутренней работы с медиа-сегментами
 
     // Функция для скрытия GIF и показа видео
     const hideGifAndShowVideo = (e) => {
@@ -153,12 +149,14 @@
         gifPreviewImage.style.display = 'none';
       }
       
-      // Немедленно скрываем весь GIF-превью контейнер
-      gifPreview.style.display = 'none';
-      gifPreview.style.opacity = '0';
-      gifPreview.style.pointerEvents = 'none';
-      gifPreview.style.zIndex = '0';
-      gifPreview.style.visibility = 'hidden';
+      // Немедленно скрываем весь GIF-превью контейнер с !important
+      gifPreview.style.cssText = `
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+        visibility: hidden !important;
+      `;
       
       // Удаляем обработчики событий, чтобы предотвратить повторные клики
       gifPreview.removeEventListener('click', hideGifAndShowVideo);
@@ -184,16 +182,24 @@
       video.currentTime = 0;
       
       // Показываем видео элемент НЕМЕДЛЕННО
-      video.style.display = 'block';
-      video.style.visibility = 'visible';
-      video.style.opacity = '1';
-      video.style.zIndex = '10';
-      video.style.position = 'absolute';
-      video.style.top = '0';
-      video.style.left = '0';
-      video.style.width = '100%';
-      video.style.height = '100%';
-      video.style.objectFit = 'contain';
+      // Убеждаемся, что все стили установлены правильно
+      const videoWrapper = document.getElementById('video-wrapper');
+      if (videoWrapper) {
+        videoWrapper.style.position = 'relative';
+      }
+      
+      video.style.cssText = `
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 10 !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+      `;
       video.classList.add('showing'); // Добавляем класс для дополнительного контроля через CSS
       
       console.log('Video display set to block, z-index:', video.style.zIndex);
@@ -202,7 +208,15 @@
         position: window.getComputedStyle(video).position,
         zIndex: window.getComputedStyle(video).zIndex,
         opacity: window.getComputedStyle(video).opacity,
-        visibility: window.getComputedStyle(video).visibility
+        visibility: window.getComputedStyle(video).visibility,
+        width: window.getComputedStyle(video).width,
+        height: window.getComputedStyle(video).height
+      });
+      console.log('GIF preview computed styles:', {
+        display: window.getComputedStyle(gifPreview).display,
+        visibility: window.getComputedStyle(gifPreview).visibility,
+        opacity: window.getComputedStyle(gifPreview).opacity,
+        zIndex: window.getComputedStyle(gifPreview).zIndex
       });
       
       // Включаем звук
