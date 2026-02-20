@@ -1737,18 +1737,23 @@
     let closeButton = null;
     let originalStyles = {};
 
-    // Сохраняем оригинальные стили
+    // Сохраняем оригинальные стили контейнера
     function saveOriginalStyles() {
+      const computedStyle = window.getComputedStyle(videoContainer);
       originalStyles = {
-        position: videoWrapper.style.position || '',
-        top: videoWrapper.style.top || '',
-        right: videoWrapper.style.right || '',
-        width: videoWrapper.style.width || '',
-        zIndex: videoWrapper.style.zIndex || '',
-        borderRadius: videoWrapper.style.borderRadius || '',
-        boxShadow: videoWrapper.style.boxShadow || '',
-        transition: videoWrapper.style.transition || '',
+        position: computedStyle.position || 'relative',
+        top: videoContainer.style.top || '',
+        right: videoContainer.style.right || '',
+        width: videoContainer.style.width || '',
+        maxWidth: videoContainer.style.maxWidth || computedStyle.maxWidth || '1200px',
+        margin: videoContainer.style.margin || computedStyle.margin || '0 auto',
+        padding: videoContainer.style.padding || computedStyle.padding || '20px',
+        zIndex: videoContainer.style.zIndex || '',
+        borderRadius: videoContainer.style.borderRadius || '',
+        boxShadow: videoContainer.style.boxShadow || '',
+        transition: videoContainer.style.transition || '',
       };
+      console.log('Original styles saved:', originalStyles);
     }
 
     // Определяем размер PiP в зависимости от экрана
@@ -1850,7 +1855,7 @@
     function deactivatePip() {
       if (!isSticky) return;
 
-      console.log('Deactivating sticky video');
+      console.log('Deactivating sticky video, restoring original position');
 
       // Убираем кнопку закрытия
       if (closeButton) {
@@ -1858,17 +1863,37 @@
         closeButton = null;
       }
 
-      // Восстанавливаем оригинальные стили
-      videoContainer.style.cssText = originalStyles.position ? `
-        position: ${originalStyles.position};
-        top: ${originalStyles.top};
-        right: ${originalStyles.right};
-        width: ${originalStyles.width};
-        z-index: ${originalStyles.zIndex};
-        border-radius: ${originalStyles.borderRadius};
-        box-shadow: ${originalStyles.boxShadow};
-        transition: ${originalStyles.transition};
-      ` : '';
+      // Восстанавливаем оригинальные стили контейнера
+      // Если стили не были сохранены, используем дефолтные
+      if (Object.keys(originalStyles).length === 0) {
+        // Дефолтные стили для контейнера
+        videoContainer.style.cssText = `
+          position: relative;
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+          z-index: auto;
+          border-radius: 0;
+          box-shadow: none;
+          transition: all 0.3s ease;
+        `;
+      } else {
+        // Восстанавливаем сохраненные стили
+        videoContainer.style.position = originalStyles.position || 'relative';
+        videoContainer.style.top = originalStyles.top || '';
+        videoContainer.style.right = originalStyles.right || '';
+        videoContainer.style.width = originalStyles.width || '100%';
+        videoContainer.style.maxWidth = originalStyles.maxWidth || '1200px';
+        videoContainer.style.margin = originalStyles.margin || '0 auto';
+        videoContainer.style.padding = originalStyles.padding || '20px';
+        videoContainer.style.zIndex = originalStyles.zIndex || '';
+        videoContainer.style.borderRadius = originalStyles.borderRadius || '';
+        videoContainer.style.boxShadow = originalStyles.boxShadow || '';
+        videoContainer.style.transition = originalStyles.transition || 'all 0.3s ease';
+      }
+      
+      console.log('Video container restored to original position');
       
       // Убираем placeholder
       if (placeholder) {
