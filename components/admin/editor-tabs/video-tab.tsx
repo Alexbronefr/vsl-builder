@@ -4,7 +4,8 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { useEffect, useState, useRef } from 'react'
 
 interface VideoTabProps {
   videoConfig: any
@@ -13,6 +14,9 @@ interface VideoTabProps {
 
 export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   const [videos, setVideos] = useState<any[]>([])
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(videoConfig?.gif_preview_url || '')
+  const [isUploadingGif, setIsUploadingGif] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/videos')
@@ -33,6 +37,63 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   const parseTime = (timeStr: string) => {
     const [mins, secs] = timeStr.split(':').map(Number)
     return (mins || 0) * 60 + (secs || 0)
+  }
+
+  const handleGifUpload = async (file: File) => {
+    if (!file.type.startsWith('image/gif')) {
+      alert('Только GIF файлы разрешены')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 10MB')
+      return
+    }
+
+    setIsUploadingGif(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('/api/videos/gif-upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Ошибка загрузки')
+      }
+
+      const data = await res.json()
+      setGifPreviewUrl(data.url)
+      onUpdate({ gif_preview_url: data.url })
+    } catch (error: any) {
+      console.error('GIF upload error:', error)
+      alert(error.message || 'Ошибка загрузки GIF')
+    } finally {
+      setIsUploadingGif(false)
+    }
+  }
+
+  const handleGifDelete = () => {
+    setGifPreviewUrl('')
+    onUpdate({ gif_preview_url: null })
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleGifUpload(file)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleGifUpload(file)
+    }
   }
 
   const formShowTime = videoConfig?.form_show_time_seconds || 1500
@@ -114,6 +175,57 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
           checked={videoConfig?.secondary_video_start_after_form !== false}
           onChange={(e) => onUpdate({ secondary_video_start_after_form: e.target.checked })}
         />
+      </div>
+
+      {/* GIF Preview Section */}
+      <div className="border-t pt-6 mt-6">
+        <Label className="text-lg font-semibold">GIF-превью</Label>
+        <p className="text-xs text-gray-500 mt-1 mb-4">
+          GIF-превью показывается вместо видео при загрузке страницы. Пользователь должен кликнуть, чтобы запустить видео со звуком.
+        </p>
+
+        {gifPreviewUrl ? (
+          <div className="space-y-4">
+            <div className="relative w-full max-w-md">
+              <img
+                src={gifPreviewUrl}
+                alt="GIF preview"
+                className="w-full h-auto rounded-lg border border-gray-700"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleGifDelete}
+            >
+              Удалить GIF
+            </Button>
+          </div>
+        ) : (
+          <div
+            className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-500 transition-colors"
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/gif"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {isUploadingGif ? (
+              <p className="text-gray-400">Загрузка...</p>
+            ) : (
+              <>
+                <p className="text-gray-400 mb-2">Перетащите GIF сюда или нажмите для выбора</p>
+                <p className="text-xs text-gray-500">Максимум 10MB, только .gif</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

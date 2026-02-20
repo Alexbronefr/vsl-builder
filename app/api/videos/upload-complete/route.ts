@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
           access_key_id: process.env.R2_ACCESS_KEY_ID,
           secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
           bucket: process.env.R2_BUCKET_NAME,
+          public_url: process.env.R2_PUBLIC_URL, // Кастомный домен для публичного доступа
         }
         
         console.log('[Video Upload] R2 config check:', {
@@ -61,6 +62,8 @@ export async function POST(request: NextRequest) {
           hasSecretKey: !!r2Config.secret_access_key,
           hasBucket: !!r2Config.bucket,
           bucketName: r2Config.bucket,
+          hasPublicUrl: !!process.env.R2_PUBLIC_URL,
+          publicUrl: process.env.R2_PUBLIC_URL || 'NOT SET',
         })
         
         if (!r2Config.bucket) {
@@ -70,6 +73,19 @@ export async function POST(request: NextRequest) {
         if (!r2Config.endpoint || !r2Config.access_key_id || !r2Config.secret_access_key) {
           throw new Error('R2 configuration is incomplete. Check R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY')
         }
+        
+        // Добавляем public_url в конфиг
+        r2Config.public_url = process.env.R2_PUBLIC_URL;
+        
+        if (!r2Config.public_url) {
+          console.error('[Video Upload] ERROR: R2_PUBLIC_URL is not set. You need to configure a custom domain in Cloudflare R2 for public access.');
+          throw new Error('R2_PUBLIC_URL environment variable is required. Please set it in Vercel environment variables.');
+        }
+        
+        console.log('[Video Upload] R2 config with public_url:', {
+          bucket: r2Config.bucket,
+          public_url: r2Config.public_url,
+        });
         
         const conversionStartTime = Date.now()
         const conversionResponse = await fetch(`${conversionServiceUrl}/convert`, {

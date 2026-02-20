@@ -79,6 +79,7 @@ export function LanderClient({
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
+      margin-bottom: 12px;
     }
     
     #video-wrapper {
@@ -90,6 +91,58 @@ export function LanderClient({
       overflow: hidden;
     }
     
+    #gif-preview {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    #gif-preview-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    #gif-preview-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    #gif-preview-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite ease-in-out;
+      margin-bottom: 12px;
+    }
+    
+    #gif-preview-text {
+      font-size: 14px;
+      color: white;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      margin: 0;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    
     #player {
       position: absolute;
       top: 0;
@@ -99,11 +152,55 @@ export function LanderClient({
       object-fit: contain;
     }
     
+    @media (max-width: 768px) {
+      #gif-preview-icon {
+        width: 60px;
+        height: 60px;
+      }
+      
+      #gif-preview-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+      
+      #gif-preview-text {
+        font-size: 12px;
+      }
+    }
+    
     #video-overlay {
       position: absolute;
       inset: 0;
       z-index: 10;
       pointer-events: auto;
+    }
+    
+    #volume-control {
+      position: absolute;
+      bottom: 48px;
+      left: 12px;
+      width: 44px;
+      height: 44px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 15;
+      transition: background 0.2s, transform 0.2s;
+    }
+    
+    #volume-control:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    
+    #volume-control:hover svg {
+      transform: scale(1.1);
+    }
+    
+    #volume-control svg {
+      transition: opacity 0.15s, transform 0.2s;
     }
     
     #form-section {
@@ -112,13 +209,17 @@ export function LanderClient({
       padding: 30px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: ${styleConfig.border_radius || '8px'};
-      transition: filter 1.5s ease-out;
+      transition: filter 1.5s ease-out, box-shadow 3s ease-out, pointer-events 1.5s ease-out, user-select 1.5s ease-out;
     }
     
     #form-section.blurred {
-      filter: blur(8px);
+      filter: blur(12px);
       pointer-events: none;
       user-select: none;
+    }
+    
+    #form-section.unblurring {
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
     }
     
     .form-title {
@@ -154,31 +255,131 @@ export function LanderClient({
     
     #cta-button {
       width: 100%;
-      padding: 16px;
-      background: ${styleConfig.accent_color || '#EF4444'};
-      color: #fff;
+      min-height: 52px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      background: #EF4444;
       border: none;
       border-radius: ${styleConfig.border_radius || '8px'};
-      font-size: 1.1rem;
-      font-weight: bold;
       cursor: pointer;
-      transition: transform 0.2s, background 0.3s;
-      min-height: 48px;
+      transition: filter 0.2s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
     }
     
     #cta-button:hover {
-      transform: scale(1.02);
+      filter: brightness(1.1);
+    }
+    
+    #cta-button:active {
+      transform: scale(0.98);
     }
     
     #cta-button:disabled {
-      opacity: 0.6;
+      opacity: 0.7;
       cursor: not-allowed;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
     }
     
     #viewers-counter {
       text-align: center;
       padding: 20px;
+      margin-bottom: 32px;
       color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22C55E;
+      animation: live-pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    
+    @keyframes live-pulse {
+      0% { 
+        opacity: 1; 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); 
+      }
+      70% { 
+        opacity: 0.7; 
+        transform: scale(1.3); 
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); 
+      }
+    }
+    
+    .count-wrapper {
+      position: relative;
+      display: inline-block;
+      overflow: hidden;
+      height: 1.2em;
+      line-height: 1.2em;
+    }
+    
+    .count {
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      display: inline-block;
+    }
+    
+    .count.old {
+      animation: count-out 0.3s ease-out forwards;
+    }
+    
+    .count.new {
+      animation: count-in 0.3s ease-out forwards;
+    }
+    
+    @keyframes count-out {
+      0% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes count-in {
+      0% {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .viewers-text {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    @media (max-width: 768px) {
+      #viewers-counter {
+        margin-bottom: 20px;
+      }
     }
     
     #countdown-timer {
@@ -208,6 +409,10 @@ export function LanderClient({
       
       #form-section {
         padding: 20px 16px;
+      }
+      
+      #viewers-counter {
+        margin-bottom: 20px;
       }
       
       .form-group input {
@@ -265,8 +470,41 @@ export function LanderClient({
           <section id="video-container">
             <div className="container">
               <div id="video-wrapper">
+                {/* GIF Preview */}
+                {lander.video_config?.gif_preview_url && (
+                  <div id="gif-preview">
+                    <img 
+                      src={lander.video_config.gif_preview_url} 
+                      alt="Video preview" 
+                      id="gif-preview-image"
+                    />
+                    <div id="gif-preview-overlay">
+                      <div id="gif-preview-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34835 21.9979 12C21.9979 14.6517 20.9447 17.1947 19.07 19.07" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                          <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 12C17.0039 13.3308 16.4774 14.6024 15.54 15.54" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                          <line x1="2" y1="2" x2="22" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <p id="gif-preview-text">Нажмите чтобы включить звук</p>
+                    </div>
+                  </div>
+                )}
                 <div id="video-overlay"></div>
                 <video id="player" playsInline></video>
+                {/* Volume Control Icon */}
+                <div id="volume-control" style={{ display: 'none' }}>
+                  <svg id="volume-icon-unmuted" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34835 21.9979 12C21.9979 14.6517 20.9447 17.1947 19.07 19.07" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 12C17.0039 13.3308 16.4774 14.6024 15.54 15.54" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <svg id="volume-icon-muted" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'none' }}>
+                    <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="2" y1="2" x2="22" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
               </div>
             </div>
           </section>
@@ -274,7 +512,11 @@ export function LanderClient({
           {/* Viewers counter */}
           {lander.tricks_config?.viewers_counter?.enabled && (
             <div id="viewers-counter">
-              👁 <span className="count">200</span> человек смотрят сейчас
+              <span className="live-dot"></span>
+              <span className="count-wrapper">
+                <span className="count">200</span>
+              </span>
+              <span className="viewers-text">человек смотрят сейчас</span>
             </div>
           )}
 
