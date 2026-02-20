@@ -297,9 +297,8 @@ export function LanderClient({
     
     #viewers-counter {
       text-align: center;
-      padding: 20px;
+      padding: 20px 0;
       margin: 0 auto 32px auto;
-      max-width: 100%;
       width: 100%;
       color: rgba(255, 255, 255, 0.7);
       font-size: 14px;
@@ -309,9 +308,6 @@ export function LanderClient({
       gap: 8px;
       flex-wrap: wrap;
       white-space: normal;
-      position: relative;
-      left: 0;
-      right: 0;
     }
     
     #viewers-counter .count-wrapper {
@@ -533,12 +529,14 @@ export function LanderClient({
 
           {/* Viewers counter */}
           {lander.tricks_config?.viewers_counter?.enabled && (
-            <div id="viewers-counter">
-              <span className="live-dot"></span>
-              <span className="count-wrapper">
-                <span className="count">200</span>
-              </span>
-              <span className="viewers-text">&nbsp;человек смотрят сейчас</span>
+            <div className="container">
+              <div id="viewers-counter">
+                <span className="live-dot"></span>
+                <span className="count-wrapper">
+                  <span className="count">200</span>
+                </span>
+                <span className="viewers-text">&nbsp;человек смотрят сейчас</span>
+              </div>
             </div>
           )}
 
