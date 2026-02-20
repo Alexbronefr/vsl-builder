@@ -45,9 +45,21 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Размер файла не должен превышать 10MB')
+    // Проверка размера (10MB = 10 * 1024 * 1024 байт)
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      alert(`Размер файла (${(file.size / 1024 / 1024).toFixed(2)}MB) превышает лимит 10MB`)
       return
+    }
+
+    // Дополнительная проверка: Vercel имеет лимит ~4.5MB для serverless functions
+    // Предупреждаем пользователя, если файл близок к лимиту
+    if (file.size > 4 * 1024 * 1024) {
+      const confirmUpload = confirm(
+        `Внимание: Размер файла ${(file.size / 1024 / 1024).toFixed(2)}MB близок к лимиту Vercel (4.5MB). ` +
+        `Рекомендуется использовать файлы меньше 4MB для надёжной загрузки. Продолжить?`
+      )
+      if (!confirmUpload) return
     }
 
     setIsUploadingGif(true)
@@ -61,8 +73,28 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
       })
 
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Ошибка загрузки')
+        // Пытаемся получить JSON ошибку
+        let errorMessage = 'Ошибка загрузки'
+        
+        // Проверяем Content-Type перед парсингом JSON
+        const contentType = res.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await res.json()
+            errorMessage = errorData.error || errorMessage
+          } catch {
+            // Если парсинг JSON не удался, используем статус код
+            errorMessage = `Ошибка ${res.status}: ${res.statusText}`
+          }
+        } else {
+          // Если ответ не JSON (например, HTML страница ошибки)
+          if (res.status === 413) {
+            errorMessage = 'Файл слишком большой для загрузки через Vercel. Максимальный размер: 4MB. Пожалуйста, используйте файл меньшего размера или оптимизируйте GIF.'
+          } else {
+            errorMessage = `Ошибка ${res.status}: ${res.statusText}`
+          }
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await res.json()
