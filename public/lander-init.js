@@ -122,11 +122,19 @@
     }
 
     console.log('Initializing GIF preview, video element:', video);
-    console.log('HLS instance:', hls);
+    console.log('HLS instance:', hls ? 'initialized' : 'not initialized');
 
     // Видео изначально скрыто
     video.style.display = 'none';
     video.style.opacity = '0';
+    video.style.visibility = 'hidden';
+    
+    // Убеждаемся, что видео не имеет src (если HLS еще не инициализирован)
+    if (!hls && video.src) {
+      console.warn('Video has src before HLS init, clearing:', video.src);
+      video.removeAttribute('src');
+      video.src = '';
+    }
 
     // Функция для скрытия GIF и показа видео
     const hideGifAndShowVideo = (e) => {
@@ -299,6 +307,19 @@
       return;
     }
 
+    if (!video) {
+      console.error('Video element not found for HLS initialization');
+      return;
+    }
+
+    // Убеждаемся, что видео элемент не имеет src (HLS.js сам управляет источником)
+    if (video.src) {
+      console.warn('Video element has src, removing it for HLS:', video.src);
+      video.removeAttribute('src');
+      video.src = '';
+      video.load(); // Сбрасываем состояние видео элемента
+    }
+
     const hlsConfig = {
       maxBufferLength: 60,
       maxMaxBufferLength: 120,
@@ -317,6 +338,8 @@
     hls = new Hls(hlsConfig);
     hls.loadSource(primaryVideo.hls_manifest_url);
     hls.attachMedia(video);
+    
+    console.log('HLS player initialized, manifest:', primaryVideo.hls_manifest_url);
 
     // Мониторинг качества
     hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
@@ -325,18 +348,30 @@
 
     // Обработка ошибок
     hls.on(Hls.Events.ERROR, (event, data) => {
+      // Игнорируем некритичные ошибки (например, предупреждения о blob URL)
+      if (data.details && data.details.includes('blob:')) {
+        console.warn('HLS blob URL warning (can be ignored):', data.details);
+        return;
+      }
+      
       if (data.fatal) {
+        console.error('HLS fatal error:', data);
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
+            console.log('HLS network error, attempting recovery...');
             hls.startLoad();
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
+            console.log('HLS media error, attempting recovery...');
             hls.recoverMediaError();
             break;
           default:
+            console.error('HLS unrecoverable error, destroying player');
             hls.destroy();
             showErrorMessage('Ошибка воспроизведения видео');
         }
+      } else {
+        console.warn('HLS non-fatal error:', data);
       }
     });
 
