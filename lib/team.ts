@@ -77,21 +77,22 @@ export async function inviteMember(email: string, role: 'admin' | 'editor' | 'vi
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         serviceRoleKey
       )
-      const { data: userData } = await serviceSupabase.auth.admin.getUserByEmail(email)
-      existingUser = userData
+      // listUsers не поддерживает фильтрацию по email напрямую, поэтому получаем всех и ищем
+      const { data: { users } } = await serviceSupabase.auth.admin.listUsers()
+      existingUser = users.find((u: any) => u.email === email)
     }
   } catch (error) {
     console.error('Error checking user:', error)
     // Продолжаем как будто пользователь не существует
   }
 
-  if (existingUser?.user) {
+  if (existingUser) {
     // Пользователь существует - добавить сразу
     const { error } = await supabase
       .from('team_members')
       .insert({
         team_id: team.team_id,
-        user_id: existingUser.user.id,
+        user_id: existingUser.id,
         role,
         accepted: true,
       })
