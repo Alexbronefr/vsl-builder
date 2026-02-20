@@ -160,3 +160,33 @@ export async function deleteVideo(id: string) {
     throw new Error(error.message)
   }
 }
+
+// Системная функция для обновления видео (используется в webhook, не требует аутентификации)
+export async function updateVideoSystem(id: string, updates: any) {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+  }
+
+  // Создаем клиент с Service Role Key для обхода RLS
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+  const supabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey
+  )
+
+  const { data, error } = await supabase
+    .from('videos')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('[updateVideoSystem] Error updating video:', error)
+    throw new Error(error.message)
+  }
+
+  return data
+}
