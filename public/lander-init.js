@@ -1114,26 +1114,43 @@
     const counterWrapper = document.querySelector('#viewers-counter .count-wrapper');
     if (!counterWrapper) return;
 
-    const baseCount = config.base_count || 200;
-    const variance = config.variance || 50;
+    // Убеждаемся, что base_count реалистичный (200-500, не миллионы)
+    let baseCount = parseInt(config.base_count) || 200;
+    if (baseCount > 10000) {
+      // Если кто-то случайно ввел огромное число, ограничиваем
+      baseCount = 500;
+    }
     
+    let variance = parseInt(config.variance) || 30;
+    if (variance > 100) {
+      variance = 50;
+    }
+    
+    // Функция форматирования числа с пробелами для тысяч
+    const formatNumber = (num) => {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+    
+    // Генерируем начальное число в диапазоне baseCount ± variance
     let currentCount = baseCount + Math.floor(Math.random() * variance * 2) - variance;
-    currentCount = Math.max(baseCount - variance, Math.min(baseCount + variance, currentCount));
+    currentCount = Math.max(Math.max(150, baseCount - variance), Math.min(baseCount + variance, currentCount));
+    currentCount = Math.max(150, Math.min(1000, currentCount)); // Ограничиваем диапазон 150-1000
 
     // Создаём начальный элемент с числом
     let countEl = document.createElement('span');
     countEl.className = 'count';
-    countEl.textContent = currentCount;
+    countEl.textContent = formatNumber(currentCount);
     counterWrapper.appendChild(countEl);
 
     function updateCount() {
-      // Генерируем новое число
-      const change = Math.floor(Math.random() * 5) + 1; // от 1 до 5
+      // Генерируем новое число с небольшим изменением (1-3)
+      const change = Math.floor(Math.random() * 3) + 1; // от 1 до 3
       const direction = Math.random() > 0.5 ? 1 : -1;
-      const newCount = Math.max(
-        baseCount - variance,
-        Math.min(baseCount + variance, currentCount + (change * direction))
-      );
+      let newCount = currentCount + (change * direction);
+      
+      // Ограничиваем диапазон
+      newCount = Math.max(Math.max(150, baseCount - variance), Math.min(baseCount + variance, newCount));
+      newCount = Math.max(150, Math.min(1000, newCount)); // Ограничиваем диапазон 150-1000
 
       if (newCount === currentCount) {
         // Если число не изменилось, просто обновляем через случайное время
@@ -1148,7 +1165,7 @@
       // Создаём новый элемент
       const newEl = document.createElement('span');
       newEl.className = 'count new';
-      newEl.textContent = newCount;
+      newEl.textContent = formatNumber(newCount);
       counterWrapper.appendChild(newEl);
 
       // Удаляем старый элемент после анимации
