@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import Script from 'next/script'
 
 interface LanderClientProps {
@@ -16,18 +15,8 @@ export function LanderClient({
   secondaryVideo,
   sessionToken,
 }: LanderClientProps) {
-  useEffect(() => {
-    // Инициализация лендинга после загрузки
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.initLander({
-        lander,
-        primaryVideo,
-        secondaryVideo,
-        sessionToken,
-      })
-    }
-  }, [lander, primaryVideo, secondaryVideo, sessionToken])
+  // lander-init.js инициализируется автоматически после загрузки
+  // через IIFE, используя window.landerConfig
 
   const styleConfig = lander.style_config || {}
   const content = lander.content || {}
@@ -358,7 +347,13 @@ export function LanderClient({
         </Script>
         <Script
           src="/lander-init.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
+          onLoad={() => {
+            // Убеждаемся, что конфиг установлен и скрипт загружен
+            if (typeof window !== 'undefined' && window.landerConfig) {
+              console.log('Lander init script loaded, config available');
+            }
+          }}
         />
       </div>
     </>

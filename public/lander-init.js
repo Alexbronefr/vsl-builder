@@ -19,12 +19,29 @@
   let sessionId = generateSessionId();
   let eventBuffer = [];
 
-  // Инициализация после загрузки DOM
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  // Инициализация после загрузки DOM и появления элемента #player
+  function waitForPlayer(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkPlayer = () => {
+      attempts++;
+      const player = document.getElementById('player');
+      if (player) {
+        callback();
+      } else if (attempts < maxAttempts) {
+        setTimeout(checkPlayer, 100);
+      } else {
+        console.error('Video element #player not found after', maxAttempts * 100, 'ms');
+      }
+    };
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkPlayer);
+    } else {
+      checkPlayer();
+    }
   }
+
+  waitForPlayer(init);
 
   function init() {
     video = document.getElementById('player');
