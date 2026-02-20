@@ -1186,7 +1186,10 @@
 
   function initFormBlur() {
     const formSection = document.getElementById('form-section');
-    if (!formSection) return;
+    if (!formSection) {
+      console.error('Form section not found for blur');
+      return;
+    }
 
     const config = lander.tricks_config.form_blur;
     const formShowTime = lander.video_config?.form_show_time_seconds || 1500;
@@ -1198,79 +1201,110 @@
     formSection.style.pointerEvents = 'none';
     formSection.style.userSelect = 'none';
 
-    if (video) {
-      let handlerRemoved = false;
-      let blurRemoved = false;
+    if (!video) {
+      console.error('Video element not found for form blur');
+      return;
+    }
+
+    let blurRemoved = false;
+    let checkInterval = null;
+    
+    const removeBlur = () => {
+      if (blurRemoved) return;
+      blurRemoved = true;
       
-      const checkTime = () => {
-        if (handlerRemoved || blurRemoved) return;
-        
-        const currentTime = video.currentTime || 0;
-        console.log('Video time check:', currentTime, '>=', formShowTime, '?', currentTime >= formShowTime);
-        
-        if (currentTime >= formShowTime) {
-          handlerRemoved = true;
-          blurRemoved = true;
-          
-          console.log('Removing form blur at time:', currentTime);
+      console.log('Removing form blur at time:', video.currentTime);
 
-          // Убираем блюр через класс
-          formSection.classList.remove('blurred');
-          formSection.classList.add('unblurring');
-          
-          // Убираем inline стили filter, если они есть
-          formSection.style.filter = 'blur(0px)';
-          
-          // Плавное возвращение pointer-events и user-select
-          setTimeout(() => {
-            formSection.style.pointerEvents = 'auto';
-            formSection.style.userSelect = 'auto';
-            console.log('Form blur removed, form is now interactive');
-          }, 1500); // После завершения анимации filter
+      // Останавливаем интервал проверки
+      if (checkInterval) {
+        clearInterval(checkInterval);
+        checkInterval = null;
+      }
 
-          // Свечение затухает через 3 секунды
-          setTimeout(() => {
-            formSection.classList.remove('unblurring');
-          }, 3000);
-
-          // Автоскролл к форме с задержкой 500ms
-          setTimeout(() => {
-            formSection.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            });
-          }, 500);
-
-          sendAnalytics('form_view', { time: video.currentTime });
-
-          // Звуковой триггер
-          if (lander.tricks_config?.sound_triggers?.enabled && 
-              lander.tricks_config.sound_triggers.form_reveal_sound) {
-            // Можно добавить звук
-          }
-
-          // Микровибрация
-          if (lander.tricks_config?.micro_vibration?.enabled && navigator.vibrate) {
-            navigator.vibrate(lander.tricks_config.micro_vibration.duration_ms || 50);
-          }
-        }
-      };
+      // Убираем блюр через класс
+      formSection.classList.remove('blurred');
+      formSection.classList.add('unblurring');
       
-      // Проверяем сразу, если видео уже прошло нужное время
-      if (video.readyState >= 2) {
+      // Принудительно убираем inline стили filter
+      formSection.style.filter = 'blur(0px) !important';
+      formSection.style.webkitFilter = 'blur(0px) !important';
+      
+      // Плавное возвращение pointer-events и user-select
+      setTimeout(() => {
+        formSection.style.pointerEvents = 'auto';
+        formSection.style.userSelect = 'auto';
+        console.log('Form blur removed, form is now interactive');
+      }, 1500); // После завершения анимации filter
+
+      // Свечение затухает через 3 секунды
+      setTimeout(() => {
+        formSection.classList.remove('unblurring');
+      }, 3000);
+
+      // Автоскролл к форме с задержкой 500ms
+      setTimeout(() => {
+        formSection.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }, 500);
+
+      sendAnalytics('form_view', { time: video.currentTime });
+
+      // Звуковой триггер
+      if (lander.tricks_config?.sound_triggers?.enabled && 
+          lander.tricks_config.sound_triggers.form_reveal_sound) {
+        // Можно добавить звук
+      }
+
+      // Микровибрация
+      if (lander.tricks_config?.micro_vibration?.enabled && navigator.vibrate) {
+        navigator.vibrate(lander.tricks_config.micro_vibration.duration_ms || 50);
+      }
+    };
+    
+    const checkTime = () => {
+      if (blurRemoved) return;
+      
+      const currentTime = video.currentTime || 0;
+      
+      if (currentTime >= formShowTime) {
+        console.log('Form blur time reached:', currentTime, '>=', formShowTime);
+        removeBlur();
+      }
+    };
+    
+    // Проверяем сразу, если видео уже прошло нужное время
+    if (video.readyState >= 2) {
+      checkTime();
+    }
+    
+    // Используем интервал для более надежной проверки (каждые 500мс)
+    checkInterval = setInterval(checkTime, 500);
+    
+    // Также слушаем timeupdate для более частой проверки
+    video.addEventListener('timeupdate', checkTime);
+    
+    // Слушаем loadedmetadata на случай, если видео уже загружено
+    video.addEventListener('loadedmetadata', () => {
+      if (!blurRemoved) {
         checkTime();
       }
-      
-      // Слушаем timeupdate
-      video.addEventListener('timeupdate', checkTime);
-      
-      // Также слушаем loadedmetadata на случай, если видео уже загружено
-      video.addEventListener('loadedmetadata', () => {
-        if (!blurRemoved) {
-          checkTime();
-        }
-      }, { once: true });
-    }
+    }, { once: true });
+    
+    // Слушаем play для проверки при старте воспроизведения
+    video.addEventListener('play', () => {
+      if (!blurRemoved) {
+        checkTime();
+      }
+    });
+    
+    // Очистка при размонтировании (если нужно)
+    window.addEventListener('beforeunload', () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+    });
   }
 
   function initPulsingCTA() {
@@ -1845,33 +1879,64 @@
       isSticky = false;
     }
 
-    // IntersectionObserver с debounce для предотвращения моргания
+    // IntersectionObserver с агрессивным debounce и флагами для предотвращения моргания
     let lastActionTime = 0;
-    const DEBOUNCE_DELAY = 300; // Минимальная задержка между действиями (мс)
+    let pendingAction = null;
+    let actionTimeout = null;
+    const DEBOUNCE_DELAY = 500; // Увеличена задержка до 500мс
+    let isProcessing = false; // Флаг для предотвращения параллельных действий
+    
+    const processAction = () => {
+      if (isProcessing) return;
+      
+      if (pendingAction === 'activate' && !isSticky && video && !video.paused) {
+        isProcessing = true;
+        activatePip();
+        setTimeout(() => { isProcessing = false; }, 100);
+      } else if (pendingAction === 'deactivate' && isSticky) {
+        isProcessing = true;
+        deactivatePip();
+        setTimeout(() => { isProcessing = false; }, 100);
+      }
+      
+      pendingAction = null;
+    };
     
     const observer = new IntersectionObserver((entries) => {
       const now = Date.now();
+      
+      // Пропускаем слишком частые срабатывания
       if (now - lastActionTime < DEBOUNCE_DELAY) {
-        return; // Пропускаем слишком частые срабатывания
+        return;
       }
       
       entries.forEach(entry => {
         const ratio = entry.intersectionRatio;
         
-        // Активация: когда менее 30% видео видно И видео играет
-        if (ratio < 0.3 && video && !video.paused && !isSticky) {
-          lastActionTime = now;
-          activatePip();
+        // Очищаем предыдущий таймаут
+        if (actionTimeout) {
+          clearTimeout(actionTimeout);
+          actionTimeout = null;
         }
-        // Деактивация: когда видео возвращается в viewport (более 50% видно для надежности)
-        else if (ratio >= 0.5 && isSticky) {
+        
+        // Активация: когда менее 20% видео видно И видео играет
+        if (ratio < 0.2 && video && !video.paused && !isSticky && !isProcessing) {
           lastActionTime = now;
-          deactivatePip();
+          pendingAction = 'activate';
+          // Задержка перед активацией для стабильности
+          actionTimeout = setTimeout(processAction, 200);
+        }
+        // Деактивация: когда видео возвращается в viewport (более 60% видно)
+        else if (ratio >= 0.6 && isSticky && !isProcessing) {
+          lastActionTime = now;
+          pendingAction = 'deactivate';
+          // Задержка перед деактивацией для стабильности
+          actionTimeout = setTimeout(processAction, 200);
         }
       });
     }, { 
-      threshold: [0, 0.3, 0.5, 1.0], // Несколько порогов для более плавной работы
-      rootMargin: '0px' // Без отступов
+      threshold: [0, 0.2, 0.6, 1.0], // Более четкие пороги
+      rootMargin: '50px' // Добавляем отступ для более плавной работы
     });
 
     observer.observe(videoContainer);
