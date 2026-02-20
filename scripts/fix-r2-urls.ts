@@ -53,7 +53,7 @@ async function fixR2Urls() {
     if (video.hls_manifest_url.includes('r2.cloudflarestorage.com')) {
       // Извлекаем путь после домена (например, /hls/video-id/master.m3u8)
       const urlParts = video.hls_manifest_url.split('/')
-      const pathIndex = urlParts.findIndex(part => part === 'hls')
+      const pathIndex = urlParts.findIndex((part: string) => part === 'hls')
       
       if (pathIndex !== -1) {
         // Собираем новый URL
