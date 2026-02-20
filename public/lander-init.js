@@ -123,6 +123,27 @@
 
     console.log('Initializing GIF preview, video element:', video);
     console.log('HLS instance:', hls ? 'initialized' : 'not initialized');
+    console.log('GIF preview element:', gifPreview);
+    console.log('GIF preview image:', gifPreviewImage);
+    console.log('GIF preview overlay:', gifPreviewOverlay);
+    
+    // Проверяем видимость GIF preview
+    if (gifPreview) {
+      const gifStyles = window.getComputedStyle(gifPreview);
+      console.log('GIF preview computed styles:', {
+        display: gifStyles.display,
+        visibility: gifStyles.visibility,
+        opacity: gifStyles.opacity,
+        zIndex: gifStyles.zIndex,
+        pointerEvents: gifStyles.pointerEvents,
+        width: gifStyles.width,
+        height: gifStyles.height
+      });
+      
+      // Убеждаемся, что GIF preview видим и кликабелен
+      gifPreview.style.pointerEvents = 'auto';
+      gifPreview.style.cursor = 'pointer';
+    }
 
     // Видео изначально скрыто
     video.style.display = 'none';
