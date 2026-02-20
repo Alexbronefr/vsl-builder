@@ -334,25 +334,65 @@
       hideGifAndShowVideo(e);
     };
     
-    gifPreview.addEventListener('click', handleGifClick, { capture: true });
-    if (gifPreviewImage) {
-      gifPreviewImage.addEventListener('click', handleGifClick, { capture: true });
-    }
-    if (gifPreviewOverlay) {
-      gifPreviewOverlay.addEventListener('click', handleGifClick, { capture: true });
+    // Убеждаемся, что video-overlay не блокирует клики на GIF preview
+    const videoOverlay = document.getElementById('video-overlay');
+    if (videoOverlay) {
+      // Временно отключаем pointer-events для overlay, если GIF preview виден
+      const overlayStyles = window.getComputedStyle(videoOverlay);
+      console.log('Video overlay styles:', {
+        display: overlayStyles.display,
+        pointerEvents: overlayStyles.pointerEvents,
+        zIndex: overlayStyles.zIndex
+      });
+      
+      // Если GIF preview виден, отключаем pointer-events для overlay
+      if (window.getComputedStyle(gifPreview).display !== 'none') {
+        videoOverlay.style.pointerEvents = 'none';
+        console.log('Video overlay pointer-events disabled for GIF preview');
+      }
     }
     
-    // Также добавляем обработчик на весь контейнер для надежности
+    // Прикрепляем обработчики с разными стратегиями
+    // 1. Прямые обработчики на элементы
+    gifPreview.addEventListener('click', handleGifClick, { capture: true, passive: false });
+    if (gifPreviewImage) {
+      gifPreviewImage.addEventListener('click', handleGifClick, { capture: true, passive: false });
+    }
+    if (gifPreviewOverlay) {
+      gifPreviewOverlay.addEventListener('click', handleGifClick, { capture: true, passive: false });
+    }
+    
+    // 2. Делегирование на video-wrapper (более надежно)
     const videoWrapper = document.getElementById('video-wrapper');
     if (videoWrapper) {
-      videoWrapper.addEventListener('click', (e) => {
-        // Проверяем, что клик был именно по GIF preview
-        if (gifPreview.contains(e.target) && window.getComputedStyle(gifPreview).display !== 'none') {
-          console.log('GIF click detected via video-wrapper');
+      const wrapperClickHandler = (e) => {
+        const target = e.target;
+        const isGifPreview = gifPreview.contains(target) || 
+                             target === gifPreview || 
+                             target === gifPreviewImage || 
+                             target === gifPreviewOverlay ||
+                             (gifPreviewOverlay && gifPreviewOverlay.contains(target));
+        
+        if (isGifPreview && window.getComputedStyle(gifPreview).display !== 'none') {
+          console.log('GIF click detected via video-wrapper delegation');
+          e.stopPropagation(); // Останавливаем всплытие
           handleGifClick(e);
         }
-      }, { capture: true });
+      };
+      
+      videoWrapper.addEventListener('click', wrapperClickHandler, { capture: true, passive: false });
+      console.log('Video wrapper click handler attached');
     }
+    
+    // 3. Также добавляем на document для максимальной надежности
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (gifPreview && gifPreview.contains(target) && window.getComputedStyle(gifPreview).display !== 'none') {
+        console.log('GIF click detected via document delegation');
+        e.stopPropagation();
+        handleGifClick(e);
+      }
+    }, { capture: true, passive: false });
     
     console.log('GIF preview click handlers attached');
     
