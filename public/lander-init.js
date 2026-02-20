@@ -131,6 +131,14 @@
         
         // Показываем видео
         if (video) {
+          // Останавливаем видео, если оно уже играет
+          if (!video.paused) {
+            video.pause();
+          }
+          
+          // Сбрасываем на начало
+          video.currentTime = 0;
+          
           video.style.display = 'block';
           video.style.opacity = '0';
           video.style.transition = 'opacity 300ms ease';
@@ -140,15 +148,15 @@
             video.style.opacity = '1';
           }, 10);
           
-          // Запускаем видео с начала с включённым звуком
-          video.currentTime = 0;
+          // Включаем звук и запускаем видео с начала
           video.muted = false;
           video.volume = 1;
           
           // КРИТИЧНО: play() должен быть вызван внутри click handler (user gesture)
+          // Это позволяет запустить видео со звуком
           video.play().catch(err => {
             console.error('Failed to play video:', err);
-            // Если autoplay заблокирован, показываем кнопку unmute
+            // Если autoplay заблокирован, запускаем с muted
             if (err.name === 'NotAllowedError') {
               video.muted = true;
               video.play().catch(() => {});
@@ -213,8 +221,8 @@
       if (skeleton) skeleton.style.display = 'none';
     });
 
-    // Автозапуск
-    if (lander.video_config?.autoplay !== false) {
+    // Автозапуск (только если нет GIF-превью)
+    if (lander.video_config?.autoplay !== false && !lander.video_config?.gif_preview_url) {
       video.addEventListener('loadedmetadata', () => {
         video.play().catch(err => {
           console.log('Autoplay prevented:', err);
