@@ -116,7 +116,13 @@
     const gifPreview = document.getElementById('gif-preview');
     const gifPreviewImage = document.getElementById('gif-preview-image');
     const gifPreviewOverlay = document.getElementById('gif-preview-overlay');
-    if (!gifPreview || !video) return;
+    if (!gifPreview || !video) {
+      console.warn('GIF preview init failed:', { gifPreview: !!gifPreview, video: !!video });
+      return;
+    }
+
+    console.log('Initializing GIF preview, video element:', video);
+    console.log('HLS instance:', hls);
 
     // Видео изначально скрыто
     video.style.display = 'none';
@@ -160,13 +166,22 @@
         video.style.opacity = '0';
         video.style.transition = 'opacity 300ms ease';
         video.style.zIndex = '2';
-        video.style.position = 'absolute';
+        // Убеждаемся, что видео правильно позиционировано
+        if (window.getComputedStyle(video).position === 'static') {
+          video.style.position = 'absolute';
+        }
         video.style.top = '0';
         video.style.left = '0';
         video.style.width = '100%';
         video.style.height = '100%';
         
         console.log('Video display set to block, z-index:', video.style.zIndex);
+        console.log('Video computed styles:', {
+          display: window.getComputedStyle(video).display,
+          position: window.getComputedStyle(video).position,
+          zIndex: window.getComputedStyle(video).zIndex,
+          opacity: window.getComputedStyle(video).opacity
+        });
         
         // Плавное появление видео
         setTimeout(() => {
@@ -181,23 +196,68 @@
         // Запускаем видео
         const playVideoWhenReady = () => {
           console.log('Video ready, attempting to play. readyState:', video.readyState);
+          console.log('HLS state:', hls ? {
+            media: !!hls.media,
+            levels: hls.levels?.length,
+            currentLevel: hls.currentLevel
+          } : 'HLS not initialized');
+          
+          // Если HLS не загружен, попробуем загрузить заново
+          if (hls && !hls.media) {
+            console.log('HLS media not attached, reattaching...');
+            hls.attachMedia(video);
+          }
+          
           video.play().then(() => {
             console.log('Video playing successfully');
           }).catch(err => {
             console.error('Failed to play video:', err);
             if (err.name === 'NotAllowedError') {
+              console.log('Autoplay blocked, trying muted...');
               video.muted = true;
-              video.play().catch(() => {});
+              video.play().then(() => {
+                console.log('Video playing muted');
+                // Пробуем включить звук через секунду
+                setTimeout(() => {
+                  video.muted = false;
+                }, 1000);
+              }).catch(() => {});
             }
           });
         };
 
-        if (video.readyState >= 2) {
+        // Проверяем готовность видео и HLS
+        if (hls && hls.media && video.readyState >= 2) {
           // Видео уже готово к воспроизведению
           console.log('Video readyState >= 2, playing immediately');
           playVideoWhenReady();
+        } else if (hls) {
+          console.log('Waiting for HLS to be ready...');
+          // Ждём готовности HLS
+          const onHLSReady = () => {
+            console.log('HLS ready, video readyState:', video.readyState);
+            if (video.readyState >= 2) {
+              playVideoWhenReady();
+            } else {
+              // Ждём готовности видео
+              video.addEventListener('canplay', () => {
+                console.log('canplay event fired');
+                playVideoWhenReady();
+              }, { once: true });
+              video.addEventListener('loadeddata', () => {
+                console.log('loadeddata event fired');
+                playVideoWhenReady();
+              }, { once: true });
+            }
+          };
+          
+          if (hls.media) {
+            onHLSReady();
+          } else {
+            hls.once(Hls.Events.MEDIA_ATTACHED, onHLSReady);
+          }
         } else {
-          console.log('Video not ready, waiting for canplay/loadeddata');
+          console.log('HLS not initialized, waiting for video events...');
           // Ждём готовности видео
           video.addEventListener('canplay', () => {
             console.log('canplay event fired');
@@ -207,7 +267,6 @@
             console.log('loadeddata event fired');
             playVideoWhenReady();
           }, { once: true });
-          // Также слушаем loadedmetadata на случай, если другие события не сработают
           video.addEventListener('loadedmetadata', () => {
             console.log('loadedmetadata event fired');
             setTimeout(playVideoWhenReady, 100);

@@ -593,7 +593,7 @@ export function LanderClient({
           `}
         </Script>
         <Script
-          src="/lander-init.js"
+          src={`/lander-init.js?v=${Date.now()}`}
           strategy="lazyOnload"
           onLoad={() => {
             // Убеждаемся, что конфиг установлен и скрипт загружен
