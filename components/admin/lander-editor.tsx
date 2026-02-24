@@ -22,6 +22,9 @@ export function LanderEditor({ lander: initialLander }: LanderEditorProps) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  
+  // Экспортируем функцию сохранения для использования в PublishButton
+  const saveRef = useRef<(() => Promise<void>) | null>(null)
 
   // Debounced автосохранение
   useEffect(() => {
@@ -52,13 +55,27 @@ export function LanderEditor({ lander: initialLander }: LanderEditorProps) {
 
       setSaved(true)
       setLastSaved(new Date())
+      
+      // Обновляем данные в базе, чтобы они были актуальны
+      const updated = await response.json()
+      if (updated) {
+        setLander(updated)
+      }
     } catch (error) {
       console.error('Save error:', error)
       alert('Ошибка при сохранении')
+      throw error // Пробрасываем ошибку для обработки в PublishButton
     } finally {
       setSaving(false)
     }
   }, [lander])
+  
+  // Сохраняем функцию в ref для доступа извне
+  useEffect(() => {
+    saveRef.current = handleSave
+    // Экспортируем функцию в window для доступа из PublishButton
+    ;(window as any).__landerEditorSave = handleSave
+  }, [handleSave])
 
   const updateLander = useCallback((updates: any) => {
     setLander((prev: any) => ({ ...prev, ...updates }))

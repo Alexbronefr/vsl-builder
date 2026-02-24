@@ -6,6 +6,10 @@ import { LanderClient } from '@/components/lander/lander-client'
 import Script from 'next/script'
 import { Metadata } from 'next'
 
+// Отключаем кеширование, чтобы изменения применялись сразу
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function generateMetadata({
   params,
 }: {
