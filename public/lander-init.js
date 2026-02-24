@@ -888,7 +888,8 @@
     const progressFill = document.getElementById('progress-fill');
     const timeDisplay = document.getElementById('elapsed-time');
 
-    if (!progressFill || !timeDisplay) return;
+    if (!progressFill) return;
+    // timeDisplay может быть null, если отображение времени отключено
 
     let progress = video.currentTime / video.duration;
 
@@ -1220,8 +1221,11 @@
       variance = 50;
     }
     
-    // Функция форматирования числа с пробелами для тысяч
+    // Функция форматирования числа с пробелами для тысяч (только для чисел >= 1000)
     const formatNumber = (num) => {
+      if (num < 1000) {
+        return num.toString();
+      }
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     };
     
@@ -1259,7 +1263,9 @@
       // Создаём новый элемент
       const newEl = document.createElement('span');
       newEl.className = 'count new';
-      newEl.textContent = formatNumber(newCount);
+      // Убеждаемся, что число вставляется как единое целое
+      const formattedNumber = formatNumber(newCount);
+      newEl.textContent = formattedNumber;
       counterWrapper.appendChild(newEl);
 
       // Удаляем старый элемент после анимации
@@ -1493,12 +1499,13 @@
       align-items: center;
       justify-content: center;
     `;
+    const buttonText = config.button_text || 'Остаться';
     modal.innerHTML = `
       <div style="background: #1a1a1a; padding: 40px; border-radius: 8px; max-width: 500px; text-align: center;">
         <h2 style="color: white; margin-bottom: 20px;">${config.title || 'Не уходите!'}</h2>
         <p style="color: #aaa; margin-bottom: 30px;">${config.message || 'Вы уверены, что хотите уйти?'}</p>
         <button id="exit-stay" style="background: #EF4444; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-size: 16px;">
-          Остаться
+          ${buttonText}
         </button>
       </div>
     `;

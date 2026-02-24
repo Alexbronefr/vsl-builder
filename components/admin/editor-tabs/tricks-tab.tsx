@@ -314,6 +314,14 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 placeholder="Вы уверены, что хотите уйти?"
               />
             </div>
+            <div>
+              <Label>Текст кнопки "Остаться"</Label>
+              <Input
+                value={tricksConfig?.exit_intent?.button_text || 'Остаться'}
+                onChange={(e) => updateTrick('exit_intent', { button_text: e.target.value })}
+                placeholder="Остаться"
+              />
+            </div>
           </div>
         )}
       </div>
