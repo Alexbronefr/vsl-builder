@@ -266,24 +266,36 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
               </p>
             </div>
           )}
-          <div>
-            <Label htmlFor="player_width_mobile">Ширина для мобильных (%)</Label>
-            <Input
-              id="player_width_mobile"
-              type="number"
-              value={videoConfig?.player_width_mobile || 100}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || 100
-                onUpdate({ player_width_mobile: value })
-              }}
-              min={50}
-              max={100}
-              className="mt-2"
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>На всю ширину страницы (мобильные)</Label>
+              <p className="text-xs text-gray-400">Растянуть видео на всю ширину экрана на телефонах</p>
+            </div>
+            <Switch
+              checked={videoConfig?.player_full_width_mobile === true}
+              onChange={(e) => onUpdate({ player_full_width_mobile: e.target.checked })}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Ширина на мобильных устройствах (50-100%)
-            </p>
           </div>
+          {!videoConfig?.player_full_width_mobile && (
+            <div>
+              <Label htmlFor="player_width_mobile">Ширина для мобильных (%)</Label>
+              <Input
+                id="player_width_mobile"
+                type="number"
+                value={videoConfig?.player_width_mobile || 100}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 100
+                  onUpdate({ player_width_mobile: value })
+                }}
+                min={50}
+                max={100}
+                className="mt-2"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Ширина на мобильных устройствах (50-100%)
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
