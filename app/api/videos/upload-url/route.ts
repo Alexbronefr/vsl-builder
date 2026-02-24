@@ -15,9 +15,12 @@ export async function POST(request: NextRequest) {
 
     const { fileName, fileSize, name } = await request.json()
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024 // 5GB
+    
     console.log('[Video Upload] Начало загрузки:', {
       fileName,
       fileSize: `${(fileSize / 1024 / 1024).toFixed(2)} MB`,
+      fileSizeGB: `${(fileSize / 1024 / 1024 / 1024).toFixed(2)} GB`,
       name: name || fileName,
       timestamp: new Date().toISOString(),
     })
@@ -25,6 +28,14 @@ export async function POST(request: NextRequest) {
     if (!fileName || !fileSize) {
       return NextResponse.json(
         { error: 'File name and size are required' },
+        { status: 400 }
+      )
+    }
+
+    // Проверка размера файла (максимум 5GB)
+    if (fileSize > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `Размер файла превышает лимит 5GB. Размер файла: ${(fileSize / 1024 / 1024 / 1024).toFixed(2)} GB` },
         { status: 400 }
       )
     }
