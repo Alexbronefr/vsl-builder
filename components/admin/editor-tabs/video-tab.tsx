@@ -233,27 +233,39 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
       <div className="border-t pt-6 mt-6">
         <Label className="text-lg font-semibold">Размер плеера</Label>
         <p className="text-xs text-gray-500 mt-1 mb-4">
-          Настройте максимальную ширину видео-плеера для разных устройств
+          Настройте максимальную ширину видео-плеера для разных устройств. Можно растянуть на всю ширину страницы.
         </p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="player_width_desktop">Ширина для ПК (px)</Label>
-            <Input
-              id="player_width_desktop"
-              type="number"
-              value={videoConfig?.player_width_desktop || 1200}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || 1200
-                onUpdate({ player_width_desktop: value })
-              }}
-              min={400}
-              max={2000}
-              className="mt-2"
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>На всю ширину страницы (ПК)</Label>
+              <p className="text-xs text-gray-400">Растянуть видео на всю ширину экрана</p>
+            </div>
+            <Switch
+              checked={videoConfig?.player_full_width_desktop === true}
+              onChange={(e) => onUpdate({ player_full_width_desktop: e.target.checked })}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Максимальная ширина на десктопе (400-2000px)
-            </p>
           </div>
+          {!videoConfig?.player_full_width_desktop && (
+            <div>
+              <Label htmlFor="player_width_desktop">Ширина для ПК (px)</Label>
+              <Input
+                id="player_width_desktop"
+                type="number"
+                value={videoConfig?.player_width_desktop || 1200}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 1200
+                  onUpdate({ player_width_desktop: value })
+                }}
+                min={400}
+                max={5000}
+                className="mt-2"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Максимальная ширина на десктопе (400-5000px или оставьте пустым для 100%)
+              </p>
+            </div>
+          )}
           <div>
             <Label htmlFor="player_width_mobile">Ширина для мобильных (%)</Label>
             <Input

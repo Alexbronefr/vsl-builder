@@ -76,9 +76,10 @@ export function LanderClient({
     #video-container {
       position: relative;
       width: 100%;
-      max-width: ${lander.video_config?.player_width_desktop || 1200}px;
+      ${lander.video_config?.player_full_width_desktop 
+        ? 'max-width: 100%; padding: 0;' 
+        : `max-width: ${lander.video_config?.player_width_desktop || 1200}px; padding: 20px;`}
       margin: 0 auto;
-      padding: 20px;
       margin-bottom: 12px;
     }
     
