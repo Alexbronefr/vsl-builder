@@ -698,13 +698,16 @@
 
     // Время (показываем только если включено в настройках)
     // По умолчанию показываем (если не установлено или true), скрываем только если явно false
-    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false;
+    const showWatchTimeSetting = lander.tricks_config?.viewers_counter?.show_watch_time;
+    const showWatchTime = showWatchTimeSetting !== false; // true если undefined, null или true
     let timeDisplay = null;
     if (showWatchTime) {
       timeDisplay = document.createElement('span');
       timeDisplay.id = 'elapsed-time';
       timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
       timeDisplay.textContent = '00:00';
+    } else {
+      console.log('[Controls] Watch time display disabled by setting');
     }
 
     // Play/Pause
@@ -1159,13 +1162,30 @@
 
   function initSocialProof() {
     const config = lander.tricks_config.social_proof_notifications;
+    if (!config) return;
+    
     const names = config.names || [];
     const cities = config.cities || [];
     const minInterval = config.interval_min_seconds || 30;
     const maxInterval = config.interval_max_seconds || 90;
-    const actionText = config.action_text || 'только что зарегистрировался';
-    const fromText = config.from_text || 'из';
+    // Используем значение из конфига, если оно есть (включая пустую строку)
+    // Если undefined или null, используем дефолт
+    const actionText = (config.action_text !== undefined && config.action_text !== null) 
+      ? config.action_text 
+      : 'только что зарегистрировался';
+    const fromText = (config.from_text !== undefined && config.from_text !== null)
+      ? config.from_text
+      : 'из';
     const messageTemplate = config.message_template || '';
+    
+    // Логирование для отладки
+    console.log('[Social Proof] Config:', {
+      actionText,
+      fromText,
+      messageTemplate,
+      hasNames: names.length > 0,
+      hasCities: cities.length > 0
+    });
 
     if (names.length === 0 || cities.length === 0) return;
 
