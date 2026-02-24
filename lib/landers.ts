@@ -111,6 +111,7 @@ export async function createLander(data: {
   }
 
   // Добавляем конфиги, если они переданы
+  // В схеме поле называется content, а не content_config
   if (data.content_config !== undefined) {
     insertData.content = data.content_config
   }
@@ -208,8 +209,8 @@ export async function duplicateLander(id: string) {
     slug: newSlug,
     language: lander.geo_lang?.language || 'ru',
     country: lander.geo_lang?.country || 'RU',
-    // Копируем все конфиги
-    content_config: lander.content_config || null,
+    // Копируем все конфиги (в схеме поле называется content, а не content_config)
+    content_config: lander.content || null,
     video_config: lander.video_config || null,
     form_config: lander.form_config || null,
     tricks_config: lander.tricks_config || null,
