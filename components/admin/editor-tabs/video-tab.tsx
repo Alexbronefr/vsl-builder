@@ -229,6 +229,52 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
         />
       </div>
 
+      {/* Player Size Section */}
+      <div className="border-t pt-6 mt-6">
+        <Label className="text-lg font-semibold">Размер плеера</Label>
+        <p className="text-xs text-gray-500 mt-1 mb-4">
+          Настройте максимальную ширину видео-плеера для разных устройств
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="player_width_desktop">Ширина для ПК (px)</Label>
+            <Input
+              id="player_width_desktop"
+              type="number"
+              value={videoConfig?.player_width_desktop || 1200}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1200
+                onUpdate({ player_width_desktop: value })
+              }}
+              min={400}
+              max={2000}
+              className="mt-2"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Максимальная ширина на десктопе (400-2000px)
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="player_width_mobile">Ширина для мобильных (%)</Label>
+            <Input
+              id="player_width_mobile"
+              type="number"
+              value={videoConfig?.player_width_mobile || 100}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 100
+                onUpdate({ player_width_mobile: value })
+              }}
+              min={50}
+              max={100}
+              className="mt-2"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Ширина на мобильных устройствах (50-100%)
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* GIF Preview Section */}
       <div className="border-t pt-6 mt-6">
         <Label className="text-lg font-semibold">GIF-превью</Label>
