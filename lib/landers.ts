@@ -82,6 +82,15 @@ export async function createLander(data: {
   slug: string
   language?: string
   country?: string
+  content_config?: any
+  video_config?: any
+  form_config?: any
+  tricks_config?: any
+  style_config?: any
+  analytics_config?: any
+  settings_config?: any
+  primary_video_id?: string | null
+  secondary_video_id?: string | null
 }) {
   const supabase = await createClient()
   const team = await getUserTeam()
@@ -90,18 +99,49 @@ export async function createLander(data: {
     throw new Error('No team found')
   }
 
+  const insertData: any = {
+    team_id: team.team_id,
+    name: data.name,
+    slug: data.slug,
+    geo_lang: {
+      language: data.language || 'ru',
+      country: data.country || 'RU',
+      rtl: false,
+    },
+  }
+
+  // Добавляем конфиги, если они переданы
+  if (data.content_config !== undefined) {
+    insertData.content = data.content_config
+  }
+  if (data.video_config !== undefined) {
+    insertData.video_config = data.video_config
+  }
+  if (data.form_config !== undefined) {
+    insertData.form_config = data.form_config
+  }
+  if (data.tricks_config !== undefined) {
+    insertData.tricks_config = data.tricks_config
+  }
+  if (data.style_config !== undefined) {
+    insertData.style_config = data.style_config
+  }
+  if (data.analytics_config !== undefined) {
+    insertData.analytics_config = data.analytics_config
+  }
+  if (data.settings_config !== undefined) {
+    insertData.settings_config = data.settings_config
+  }
+  if (data.primary_video_id !== undefined) {
+    insertData.primary_video_id = data.primary_video_id
+  }
+  if (data.secondary_video_id !== undefined) {
+    insertData.secondary_video_id = data.secondary_video_id
+  }
+
   const { data: lander, error } = await supabase
     .from('landers')
-    .insert({
-      team_id: team.team_id,
-      name: data.name,
-      slug: data.slug,
-      geo_lang: {
-        language: data.language || 'ru',
-        country: data.country || 'RU',
-        rtl: false,
-      },
-    })
+    .insert(insertData)
     .select()
     .single()
 
@@ -162,10 +202,22 @@ export async function duplicateLander(id: string) {
 
   const newSlug = `${lander.slug}-copy-${Date.now()}`
   
+  // Копируем все конфиги и настройки из оригинального лендинга
   return await createLander({
     name: `${lander.name} (копия)`,
     slug: newSlug,
     language: lander.geo_lang?.language || 'ru',
     country: lander.geo_lang?.country || 'RU',
+    // Копируем все конфиги
+    content_config: lander.content_config || null,
+    video_config: lander.video_config || null,
+    form_config: lander.form_config || null,
+    tricks_config: lander.tricks_config || null,
+    style_config: lander.style_config || null,
+    analytics_config: lander.analytics_config || null,
+    settings_config: lander.settings_config || null,
+    // Копируем другие настройки
+    primary_video_id: lander.primary_video_id || null,
+    secondary_video_id: lander.secondary_video_id || null,
   })
 }
