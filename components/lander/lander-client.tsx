@@ -632,7 +632,7 @@ export function LanderClient({
           `}
         </Script>
         <Script
-          src={`/lander-init.js?v=${Date.now()}`}
+          src={`/lander-init.js?v=${lander.updated_at ? new Date(lander.updated_at).getTime() : Date.now()}`}
           strategy="lazyOnload"
           onLoad={() => {
             // Убеждаемся, что конфиг установлен и скрипт загружен

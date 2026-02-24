@@ -697,9 +697,14 @@
     });
 
     // Время (показываем только если включено в настройках)
-    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false;
+    // Проверяем явно: если undefined или null, считаем что включено (по умолчанию)
+    // Если явно false, то выключено
+    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false && 
+                          lander.tricks_config?.viewers_counter?.show_watch_time !== undefined;
+    // Но если явно установлено false, то не показываем
+    const isWatchTimeDisabled = lander.tricks_config?.viewers_counter?.show_watch_time === false;
     let timeDisplay = null;
-    if (showWatchTime) {
+    if (!isWatchTimeDisabled) {
       timeDisplay = document.createElement('span');
       timeDisplay.id = 'elapsed-time';
       timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
@@ -907,7 +912,9 @@
     }
 
     progressFill.style.width = (progress * 100) + '%';
-    timeDisplay.textContent = formatTime(video.currentTime);
+    if (timeDisplay) {
+      timeDisplay.textContent = formatTime(video.currentTime);
+    }
   }
 
   function updateBuffer() {
