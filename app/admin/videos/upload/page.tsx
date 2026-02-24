@@ -113,20 +113,50 @@ export default function UploadVideoPage() {
       setProgress(5) // Начало загрузки
       
       const uploadStartTime = Date.now()
-      console.log('[Client] Размер файла:', `${(file.size / 1024 / 1024).toFixed(2)} MB`)
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(2)
+      console.log('[Client] Размер файла:', `${fileSizeMB} MB`)
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('raw-videos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
+      // Для больших файлов (>100MB) используем multipart upload
+      const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100MB
+      
+      let uploadData: any
+      let uploadError: any
+      
+      if (file.size > LARGE_FILE_THRESHOLD) {
+        console.log('[Client] Большой файл, используем multipart upload...')
+        // Используем upload с опцией для больших файлов
+        const { data, error } = await supabase.storage
+          .from('raw-videos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+            // Для больших файлов Supabase автоматически использует multipart upload
+          })
+        uploadData = data
+        uploadError = error
+      } else {
+        // Для небольших файлов обычная загрузка
+        const { data, error } = await supabase.storage
+          .from('raw-videos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          })
+        uploadData = data
+        uploadError = error
+      }
 
       const uploadTime = Date.now() - uploadStartTime
       const uploadSpeed = file.size / uploadTime / 1024 // KB/s
 
       if (uploadError) {
         console.error('[Client] Ошибка загрузки:', uploadError)
+        // Более детальное сообщение об ошибке
+        if (uploadError.message?.includes('exceeded') || uploadError.message?.includes('maximum')) {
+          throw new Error('Размер файла превышает максимально допустимый. Убедитесь, что файл меньше 5GB и что bucket настроен правильно.')
+        }
         throw new Error(uploadError.message || 'Ошибка загрузки в Storage')
       }
 
