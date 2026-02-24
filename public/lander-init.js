@@ -1159,12 +1159,29 @@
     const cities = config.cities || [];
     const minInterval = config.interval_min_seconds || 30;
     const maxInterval = config.interval_max_seconds || 90;
+    const actionText = config.action_text || 'только что зарегистрировался';
+    const fromText = config.from_text || 'из';
+    const messageTemplate = config.message_template || '';
 
     if (names.length === 0 || cities.length === 0) return;
 
     function showNotification() {
       const name = names[Math.floor(Math.random() * names.length)];
       const city = cities[Math.floor(Math.random() * cities.length)];
+
+      // Формируем текст сообщения
+      let messageText;
+      if (messageTemplate) {
+        // Используем кастомный шаблон
+        messageText = messageTemplate
+          .replace(/{name}/g, name)
+          .replace(/{city}/g, city)
+          .replace(/{from_text}/g, fromText)
+          .replace(/{action_text}/g, actionText);
+      } else {
+        // Стандартный формат: "Имя из Город"
+        messageText = `${name} ${fromText} ${city}`;
+      }
 
       const toast = document.createElement('div');
       toast.className = 'social-proof-toast';
@@ -1183,8 +1200,8 @@
         max-width: 300px;
       `;
       toast.innerHTML = `
-        <div style="font-weight: bold;">${name} из ${city}</div>
-        <div style="font-size: 12px; color: #aaa;">только что зарегистрировался</div>
+        <div style="font-weight: bold;">${messageText}</div>
+        <div style="font-size: 12px; color: #aaa;">${actionText}</div>
         <div style="font-size: 11px; color: #888; margin-top: 5px;">${Math.floor(Math.random() * 3) + 1} мин. назад</div>
       `;
 

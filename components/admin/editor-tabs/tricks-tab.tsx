@@ -93,6 +93,39 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 className="min-h-[100px]"
               />
             </div>
+            <div>
+              <Label>Текст действия</Label>
+              <Input
+                value={tricksConfig?.social_proof_notifications?.action_text || 'только что зарегистрировался'}
+                onChange={(e) => updateTrick('social_proof_notifications', { action_text: e.target.value })}
+                placeholder="только что зарегистрировался"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Используйте плейсхолдеры: {'{name}'} для имени, {'{city}'} для города
+              </p>
+            </div>
+            <div>
+              <Label>Текст &quot;из&quot; (предлог города)</Label>
+              <Input
+                value={tricksConfig?.social_proof_notifications?.from_text || 'из'}
+                onChange={(e) => updateTrick('social_proof_notifications', { from_text: e.target.value })}
+                placeholder="из"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Примеры: из, from, de, von, da, z
+              </p>
+            </div>
+            <div>
+              <Label>Шаблон сообщения (опционально)</Label>
+              <Input
+                value={tricksConfig?.social_proof_notifications?.message_template || ''}
+                onChange={(e) => updateTrick('social_proof_notifications', { message_template: e.target.value })}
+                placeholder="{name} {from_text} {city} {action_text}"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Оставьте пустым для стандартного формата. Плейсхолдеры: {'{name}'}, {'{city}'}, {'{from_text}'}, {'{action_text}'}
+              </p>
+            </div>
           </div>
         )}
       </div>
