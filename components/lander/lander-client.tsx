@@ -96,16 +96,15 @@ export function LanderClient({
       position: relative;
       width: 100%;
       ${lander.video_config?.player_full_width_desktop 
-        ? 'max-width: 100%; padding: 0;' 
-        : `max-width: ${lander.video_config?.player_width_desktop || 1200}px; padding: 20px;`}
-      margin: 0 auto;
+        ? 'max-width: 100vw; padding: 0; margin-left: calc(-50vw + 50%); margin-right: 0;' 
+        : `max-width: ${lander.video_config?.player_width_desktop || 1200}px; padding: 20px; margin: 0 auto;`}
       margin-bottom: 12px;
     }
     
     @media (max-width: 768px) {
       #video-container {
         ${lander.video_config?.player_full_width_mobile 
-          ? 'max-width: 100%; padding: 0;' 
+          ? 'max-width: 100vw !important; padding: 0 !important; margin-left: calc(-50vw + 50%) !important; margin-right: 0 !important; width: 100vw !important;' 
           : `max-width: ${lander.video_config?.player_width_mobile || 100}%; padding: 10px;`}
       }
     }
