@@ -45,6 +45,25 @@ export function LanderClient({
       padding: 0 16px;
     }
     
+    /* Убираем все ограничения для видео на всю ширину */
+    #video-container.full-width {
+      width: 100vw !important;
+      max-width: 100vw !important;
+      margin-left: calc(-50vw + 50%) !important;
+      margin-right: 0 !important;
+      padding: 0 !important;
+    }
+    
+    @media (max-width: 768px) {
+      #video-container.full-width-mobile {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin-left: calc(-50vw + 50%) !important;
+        margin-right: 0 !important;
+        padding: 0 !important;
+      }
+    }
+    
     header {
       padding: 20px 0;
       text-align: center;
@@ -517,7 +536,7 @@ export function LanderClient({
 
           {/* Video Player Container */}
           <section id="video-container">
-            <div className="container">
+            <div className={lander.video_config?.player_full_width_desktop || lander.video_config?.player_full_width_mobile ? '' : 'container'}>
               <div id="video-wrapper">
                 {/* GIF Preview */}
                 {lander.video_config?.gif_preview_url && (
