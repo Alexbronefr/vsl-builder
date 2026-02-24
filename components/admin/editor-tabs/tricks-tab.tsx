@@ -466,6 +466,26 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
         )}
       </div>
 
+      {/* Video Error Message */}
+      <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-6">
+        <div className="mb-4">
+          <h3 className="font-semibold text-white">Сообщение об ошибке видео</h3>
+          <p className="text-sm text-gray-400">Текст, который показывается при ошибке воспроизведения</p>
+        </div>
+        <div>
+          <Label>Текст ошибки</Label>
+          <Input
+            value={tricksConfig?.video_error_message || 'Ошибка воспроизведения видео'}
+            onChange={(e) => {
+              const updated = { ...tricksConfig };
+              updated.video_error_message = e.target.value;
+              onUpdate({ tricks_config: updated });
+            }}
+            placeholder="Ошибка воспроизведения видео"
+          />
+        </div>
+      </div>
+
       {/* Other toggles */}
       <div className="space-y-4">
         {[
