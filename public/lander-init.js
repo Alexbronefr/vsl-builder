@@ -703,9 +703,11 @@
     });
 
     // Время (показываем только если включено в настройках)
-    // По умолчанию показываем (если не установлено или true), скрываем только если явно false
+    // Проверяем явно: если undefined или null, считаем что включено (по умолчанию true)
+    // Если явно false, то выключаем
     const showWatchTimeSetting = lander.tricks_config?.viewers_counter?.show_watch_time;
-    const showWatchTime = showWatchTimeSetting !== false; // true если undefined, null или true
+    // По умолчанию показываем (true), скрываем только если явно false
+    const showWatchTime = showWatchTimeSetting !== false;
     let timeDisplay = null;
     if (showWatchTime) {
       timeDisplay = document.createElement('span');
@@ -713,7 +715,7 @@
       timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
       timeDisplay.textContent = '00:00';
     } else {
-      console.log('[Controls] Watch time display disabled by setting');
+      console.log('[Controls] Watch time display disabled by setting:', showWatchTimeSetting);
     }
 
     // Play/Pause

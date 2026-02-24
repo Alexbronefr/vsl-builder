@@ -186,7 +186,10 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
               </div>
               <Switch
                 checked={tricksConfig?.viewers_counter?.show_watch_time !== false}
-                onChange={(e) => updateTrick('viewers_counter', { show_watch_time: e.target.checked })}
+                onChange={(e) => {
+                  // Явно устанавливаем true или false
+                  updateTrick('viewers_counter', { show_watch_time: e.target.checked });
+                }}
               />
             </div>
             <div>

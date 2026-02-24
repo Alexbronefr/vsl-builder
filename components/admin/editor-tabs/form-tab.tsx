@@ -54,6 +54,18 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
   return (
     <div className="space-y-6">
       <div>
+        <Label>Заголовок формы</Label>
+        <Input
+          value={formConfig?.title || 'Зарегистрируйтесь сейчас'}
+          onChange={(e) => onUpdate({ title: e.target.value })}
+          placeholder="Зарегистрируйтесь сейчас"
+          className="mt-2"
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Заголовок, который отображается над формой
+        </p>
+      </div>
+      <div>
         <Label>Поля формы</Label>
         <div className="mt-4 space-y-4">
           {defaultFields.map((defaultField, index) => {

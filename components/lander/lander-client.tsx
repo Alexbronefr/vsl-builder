@@ -575,7 +575,7 @@ export function LanderClient({
           {/* Form */}
           <section id="form-section" className="blurred">
             <div className="container">
-              <h2 className="form-title">Зарегистрируйтесь сейчас</h2>
+              <h2 className="form-title">{formConfig.title || 'Зарегистрируйтесь сейчас'}</h2>
               <form id="lead-form">
                 {formConfig.fields
                   ?.filter((f: any) => f.enabled)
