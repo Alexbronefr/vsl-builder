@@ -210,6 +210,56 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
           className="mt-2"
         />
       </div>
+
+      <div className="border-t pt-6 mt-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Тексты сообщений</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="submitting_text">Текст при отправке</Label>
+            <Input
+              id="submitting_text"
+              value={formConfig?.submitting_text || 'Отправка...'}
+              onChange={(e) => onUpdate({ submitting_text: e.target.value })}
+              placeholder="Отправка..."
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="error_text">Текст при ошибке</Label>
+            <Input
+              id="error_text"
+              value={formConfig?.error_text || 'Ошибка отправки. Попробуйте ещё раз.'}
+              onChange={(e) => onUpdate({ error_text: e.target.value })}
+              placeholder="Ошибка отправки. Попробуйте ещё раз."
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="thank_you_title">Заголовок благодарности</Label>
+            <Input
+              id="thank_you_title"
+              value={formConfig?.thank_you_title || 'Спасибо!'}
+              onChange={(e) => onUpdate({ thank_you_title: e.target.value })}
+              placeholder="Спасибо!"
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="thank_you_message">Сообщение благодарности</Label>
+            <Textarea
+              id="thank_you_message"
+              value={formConfig?.thank_you_message || 'Ваша заявка успешно отправлена'}
+              onChange={(e) => onUpdate({ thank_you_message: e.target.value })}
+              placeholder="Ваша заявка успешно отправлена"
+              className="mt-2"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

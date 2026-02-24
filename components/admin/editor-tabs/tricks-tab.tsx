@@ -126,6 +126,17 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 Оставьте пустым для стандартного формата. Плейсхолдеры: {'{name}'}, {'{city}'}, {'{from_text}'}, {'{action_text}'}
               </p>
             </div>
+            <div>
+              <Label>Текст времени (например, &quot;мин. назад&quot;)</Label>
+              <Input
+                value={tricksConfig?.social_proof_notifications?.time_text || 'мин. назад'}
+                onChange={(e) => updateTrick('social_proof_notifications', { time_text: e.target.value })}
+                placeholder="мин. назад"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Примеры: мин. назад, min ago, min fa, min temu. Используется с числом: &quot;{'{minutes}'} {time_text}&quot;
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -177,6 +188,17 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 checked={tricksConfig?.viewers_counter?.show_watch_time !== false}
                 onChange={(e) => updateTrick('viewers_counter', { show_watch_time: e.target.checked })}
               />
+            </div>
+            <div>
+              <Label>Текст счётчика</Label>
+              <Input
+                value={tricksConfig?.viewers_counter?.text || 'человек смотрят сейчас'}
+                onChange={(e) => updateTrick('viewers_counter', { text: e.target.value })}
+                placeholder="человек смотрят сейчас"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Примеры: человек смотрят сейчас, people watching now, personnes regardent
+              </p>
             </div>
           </div>
         )}
@@ -430,6 +452,14 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 value={tricksConfig?.countdown_timer?.text || ''}
                 onChange={(e) => updateTrick('countdown_timer', { text: e.target.value })}
                 placeholder="Осталось времени:"
+              />
+            </div>
+            <div>
+              <Label>Текст при истечении времени</Label>
+              <Input
+                value={tricksConfig?.countdown_timer?.expired_text || 'Время истекло!'}
+                onChange={(e) => updateTrick('countdown_timer', { expired_text: e.target.value })}
+                placeholder="Время истекло!"
               />
             </div>
           </div>

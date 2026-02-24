@@ -484,7 +484,8 @@
           default:
             console.error('HLS unrecoverable error, destroying player');
             hls.destroy();
-            showErrorMessage('Ошибка воспроизведения видео');
+            const errorMessage = lander.tricks_config?.video_error_message || 'Ошибка воспроизведения видео';
+            showErrorMessage(errorMessage);
         }
       } else {
         console.warn('HLS non-fatal error:', data);
@@ -1202,7 +1203,7 @@
       toast.innerHTML = `
         <div style="font-weight: bold;">${messageText}</div>
         <div style="font-size: 12px; color: #aaa;">${actionText}</div>
-        <div style="font-size: 11px; color: #888; margin-top: 5px;">${Math.floor(Math.random() * 3) + 1} мин. назад</div>
+        <div style="font-size: 11px; color: #888; margin-top: 5px;">${Math.floor(Math.random() * 3) + 1} ${config.time_text || 'мин. назад'}</div>
       `;
 
       document.body.appendChild(toast);
@@ -1583,7 +1584,8 @@
         remaining--;
         if (remaining <= 0) {
           clearInterval(interval);
-          timerEl.querySelector('.time').textContent = 'Время истекло!';
+          const expiredText = lander.tricks_config?.countdown_timer?.expired_text || 'Время истекло!';
+          timerEl.querySelector('.time').textContent = expiredText;
           return;
         }
 
@@ -1636,7 +1638,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25"/>
               <path d="M12 2C6.48 2 2 6.48 2 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
             </svg>
-            Отправка...
+            ${lander.form_config?.submitting_text || 'Отправка...'}
           </span>
         `;
       }
@@ -1697,7 +1699,8 @@
             }
           }
         }
-        alert('Ошибка отправки. Попробуйте ещё раз.');
+        const errorText = lander.form_config?.error_text || 'Ошибка отправки. Попробуйте ещё раз.';
+        alert(errorText);
       }
     });
   }
@@ -1736,10 +1739,12 @@
   function showThankYouMessage() {
     const formSection = document.getElementById('form-section');
     if (formSection) {
+      const thankYouTitle = lander.form_config?.thank_you_title || 'Спасибо!';
+      const thankYouMessage = lander.form_config?.thank_you_message || 'Ваша заявка успешно отправлена';
       formSection.innerHTML = `
         <div style="text-align: center; padding: 40px;">
-          <h2 style="color: white; font-size: 2rem; margin-bottom: 20px;">Спасибо!</h2>
-          <p style="color: #aaa; font-size: 1.2rem;">Ваша заявка успешно отправлена</p>
+          <h2 style="color: white; font-size: 2rem; margin-bottom: 20px;">${thankYouTitle}</h2>
+          <p style="color: #aaa; font-size: 1.2rem;">${thankYouMessage}</p>
         </div>
       `;
     }
