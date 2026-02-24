@@ -64,12 +64,22 @@ export async function POST(request: NextRequest) {
     // Клиент будет загружать напрямую в Supabase Storage
     console.log('[Video Upload] Готово к загрузке. Ожидание загрузки файла с клиента...')
     
+    console.log('[API /upload-url] ✅ Успешно, возвращаем данные:', {
+      videoId: video.id,
+      filePath,
+    })
+    
     return NextResponse.json({
       path: filePath,
       videoId: video.id,
     })
   } catch (error: any) {
-    console.error('Upload URL error:', error)
+    console.error('[API /upload-url] ❌ Ошибка:', {
+      error: error,
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    })
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

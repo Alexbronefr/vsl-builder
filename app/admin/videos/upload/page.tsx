@@ -84,23 +84,50 @@ export default function UploadVideoPage() {
       // 1. Создать запись в БД через API
       console.log('[Client] Шаг 1: Создание записи в БД...')
       const createStartTime = Date.now()
-      const createResponse = await fetch('/api/videos/upload-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileSize: file.size,
-          name: name || file.name,
-        }),
-      })
+      
+      let createResponse: Response
+      try {
+        createResponse = await fetch('/api/videos/upload-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileSize: file.size,
+            name: name || file.name,
+          }),
+        })
+      } catch (fetchError: any) {
+        console.error('[Client] Ошибка fetch при создании записи:', {
+          error: fetchError,
+          message: fetchError.message,
+          name: fetchError.name,
+          stack: fetchError.stack,
+        })
+        throw new Error(`Ошибка сети при создании записи: ${fetchError.message || 'Failed to fetch'}. Проверьте подключение к интернету и консоль браузера (F12 → Network) для деталей.`)
+      }
 
       const createTime = Date.now() - createStartTime
-      console.log('[Client] Запись создана за', `${createTime}ms`)
+      console.log('[Client] Запись создана за', `${createTime}ms`, {
+        status: createResponse.status,
+        statusText: createResponse.statusText,
+        ok: createResponse.ok,
+      })
 
       if (!createResponse.ok) {
-        const errorData = await createResponse.json()
+        let errorData: any
+        try {
+          errorData = await createResponse.json()
+        } catch (parseError) {
+          const text = await createResponse.text()
+          console.error('[Client] Ошибка парсинга ответа:', {
+            status: createResponse.status,
+            statusText: createResponse.statusText,
+            body: text,
+          })
+          throw new Error(`Ошибка сервера ${createResponse.status}: ${createResponse.statusText}`)
+        }
         console.error('[Client] Ошибка создания записи:', errorData)
         throw new Error(errorData.error || 'Ошибка создания записи')
       }
@@ -115,6 +142,13 @@ export default function UploadVideoPage() {
       const uploadStartTime = Date.now()
       const fileSizeMB = (file.size / 1024 / 1024).toFixed(2)
       console.log('[Client] Размер файла:', `${fileSizeMB} MB`)
+      console.log('[Client] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('[Client] Supabase Key присутствует:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+      
+      // Проверяем, что Supabase клиент создан правильно
+      if (!supabase) {
+        throw new Error('Supabase клиент не инициализирован. Проверьте переменные окружения NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      }
       
       // Для больших файлов (>100MB) используем multipart upload
       const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100MB
@@ -122,42 +156,61 @@ export default function UploadVideoPage() {
       let uploadData: any
       let uploadError: any
       
-      if (file.size > LARGE_FILE_THRESHOLD) {
-        console.log('[Client] Большой файл, используем multipart upload...')
-        // Используем upload с опцией для больших файлов
-        const { data, error } = await supabase.storage
-          .from('raw-videos')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type,
-            // Для больших файлов Supabase автоматически использует multipart upload
-          })
-        uploadData = data
-        uploadError = error
-      } else {
-        // Для небольших файлов обычная загрузка
-        const { data, error } = await supabase.storage
-          .from('raw-videos')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type,
-          })
-        uploadData = data
-        uploadError = error
+      try {
+        if (file.size > LARGE_FILE_THRESHOLD) {
+          console.log('[Client] Большой файл, используем multipart upload...')
+          // Используем upload с опцией для больших файлов
+          const result = await supabase.storage
+            .from('raw-videos')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: file.type,
+              // Для больших файлов Supabase автоматически использует multipart upload
+            })
+          uploadData = result.data
+          uploadError = result.error
+        } else {
+          // Для небольших файлов обычная загрузка
+          console.log('[Client] Обычная загрузка для файла <100MB...')
+          const result = await supabase.storage
+            .from('raw-videos')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: file.type,
+            })
+          uploadData = result.data
+          uploadError = result.error
+        }
+      } catch (uploadException: any) {
+        console.error('[Client] Исключение при загрузке в Storage:', {
+          error: uploadException,
+          message: uploadException.message,
+          name: uploadException.name,
+          stack: uploadException.stack,
+        })
+        throw new Error(`Ошибка загрузки в Supabase Storage: ${uploadException.message || 'Unknown error'}. Проверьте консоль браузера (F12 → Network) и убедитесь, что Supabase Storage bucket 'raw-videos' существует и настроен правильно.`)
       }
 
       const uploadTime = Date.now() - uploadStartTime
       const uploadSpeed = file.size / uploadTime / 1024 // KB/s
 
       if (uploadError) {
-        console.error('[Client] Ошибка загрузки:', uploadError)
+        console.error('[Client] Ошибка загрузки в Storage:', {
+          error: uploadError,
+          message: uploadError.message,
+          statusCode: uploadError.statusCode,
+          errorCode: uploadError.error,
+        })
         // Более детальное сообщение об ошибке
         if (uploadError.message?.includes('exceeded') || uploadError.message?.includes('maximum')) {
           throw new Error('Размер файла превышает максимально допустимый. Убедитесь, что файл меньше 5GB и что bucket настроен правильно.')
         }
-        throw new Error(uploadError.message || 'Ошибка загрузки в Storage')
+        if (uploadError.message?.includes('Failed to fetch') || uploadError.message?.includes('NetworkError')) {
+          throw new Error('Ошибка сети при загрузке. Проверьте подключение к интернету и консоль браузера (F12 → Network) для деталей. Возможно, проблема с CORS или таймаутом.')
+        }
+        throw new Error(uploadError.message || `Ошибка загрузки в Storage (код: ${uploadError.statusCode || 'unknown'})`)
       }
 
       console.log('[Client] Загрузка завершена:', {
@@ -171,22 +224,48 @@ export default function UploadVideoPage() {
       // 3. Уведомить сервер о завершении загрузки
       console.log('[Client] Шаг 3: Уведомление сервера о завершении...')
       const completeStartTime = Date.now()
-      const completeResponse = await fetch('/api/videos/upload-complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          videoId,
-          filePath: filePath,
-        }),
-      })
+      
+      let completeResponse: Response
+      try {
+        completeResponse = await fetch('/api/videos/upload-complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            videoId,
+            filePath: filePath,
+          }),
+        })
+      } catch (fetchError: any) {
+        console.error('[Client] Ошибка fetch при завершении загрузки:', {
+          error: fetchError,
+          message: fetchError.message,
+          name: fetchError.name,
+        })
+        throw new Error(`Ошибка сети при завершении загрузки: ${fetchError.message || 'Failed to fetch'}. Проверьте подключение к интернету.`)
+      }
 
       const completeTime = Date.now() - completeStartTime
-      console.log('[Client] Сервер уведомлен за', `${completeTime}ms`)
+      console.log('[Client] Сервер уведомлен за', `${completeTime}ms`, {
+        status: completeResponse.status,
+        statusText: completeResponse.statusText,
+        ok: completeResponse.ok,
+      })
 
       if (!completeResponse.ok) {
-        const errorData = await completeResponse.json()
+        let errorData: any
+        try {
+          errorData = await completeResponse.json()
+        } catch (parseError) {
+          const text = await completeResponse.text()
+          console.error('[Client] Ошибка парсинга ответа при завершении:', {
+            status: completeResponse.status,
+            statusText: completeResponse.statusText,
+            body: text,
+          })
+          throw new Error(`Ошибка сервера ${completeResponse.status}: ${completeResponse.statusText}`)
+        }
         console.error('[Client] Ошибка завершения:', errorData)
         throw new Error(errorData.error || 'Ошибка завершения загрузки')
       }
@@ -199,9 +278,15 @@ export default function UploadVideoPage() {
       }
 
       // Успешно загружено
+      console.log('[Client] ✅ Загрузка полностью завершена!')
       router.push('/admin/videos')
     } catch (err: any) {
-      console.error('Upload error:', err)
+      console.error('[Client] ❌ Ошибка загрузки:', {
+        error: err,
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+      })
       setError(err.message || 'Ошибка при загрузке файла')
       setUploading(false)
     }
