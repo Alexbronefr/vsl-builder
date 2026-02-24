@@ -134,7 +134,7 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
                 placeholder="мин. назад"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Примеры: мин. назад, min ago, min fa, min temu. Используется с числом: &quot;{'{minutes}'} {time_text}&quot;
+                Примеры: мин. назад, min ago, min fa, min temu. Используется с числом: &quot;{'{minutes}'} {'{time_text}'}&quot;
               </p>
             </div>
           </div>
