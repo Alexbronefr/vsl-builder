@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only GIF files are allowed' }, { status: 400 })
     }
 
-    // Проверка размера (макс 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    // Проверка размера (макс 50MB)
+    const maxSize = 50 * 1024 * 1024 // 50MB
     if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 })
+      return NextResponse.json({ error: 'Файл слишком большой. Максимум 50MB' }, { status: 400 })
     }
 
     // Создаём уникальное имя файла
