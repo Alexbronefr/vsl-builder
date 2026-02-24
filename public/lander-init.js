@@ -695,11 +695,15 @@
       progressFill.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
     });
 
-    // Время
-    const timeDisplay = document.createElement('span');
-    timeDisplay.id = 'elapsed-time';
-    timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
-    timeDisplay.textContent = '00:00';
+    // Время (показываем только если включено в настройках)
+    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false;
+    let timeDisplay = null;
+    if (showWatchTime) {
+      timeDisplay = document.createElement('span');
+      timeDisplay.id = 'elapsed-time';
+      timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
+      timeDisplay.textContent = '00:00';
+    }
 
     // Play/Pause
     const playPauseBtn = document.createElement('button');
@@ -803,7 +807,9 @@
     document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
 
     controlsContainer.appendChild(progressBar);
-    controlsContainer.appendChild(timeDisplay);
+    if (timeDisplay) {
+      controlsContainer.appendChild(timeDisplay);
+    }
     controlsContainer.appendChild(playPauseBtn);
     controlsContainer.appendChild(fullscreenBtn);
     videoWrapper.appendChild(controlsContainer);

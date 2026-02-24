@@ -110,21 +110,39 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
           />
         </div>
         {tricksConfig?.viewers_counter?.enabled !== false && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Базовое число</Label>
-              <Input
-                type="number"
-                value={tricksConfig?.viewers_counter?.base_count || 200}
-                onChange={(e) => updateTrick('viewers_counter', { base_count: parseInt(e.target.value) || 200 })}
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Базовое число</Label>
+                <Input
+                  type="number"
+                  value={tricksConfig?.viewers_counter?.base_count || 200}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 200;
+                    updateTrick('viewers_counter', { base_count: value });
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Разброс (±)</Label>
+                <Input
+                  type="number"
+                  value={tricksConfig?.viewers_counter?.variance || 30}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 30;
+                    updateTrick('viewers_counter', { variance: value });
+                  }}
+                />
+              </div>
             </div>
-            <div>
-              <Label>Разброс (±)</Label>
-              <Input
-                type="number"
-                value={tricksConfig?.viewers_counter?.variance || 30}
-                onChange={(e) => updateTrick('viewers_counter', { variance: parseInt(e.target.value) || 30 })}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Показывать время просмотра</Label>
+                <p className="text-xs text-gray-400">Отображать время просмотра в контролах видео</p>
+              </div>
+              <Switch
+                checked={tricksConfig?.viewers_counter?.show_watch_time !== false}
+                onChange={(e) => updateTrick('viewers_counter', { show_watch_time: e.target.checked })}
               />
             </div>
           </div>
