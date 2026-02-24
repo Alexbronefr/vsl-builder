@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface VideoTabProps {
   videoConfig: any
@@ -82,43 +83,36 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
     }
 
     setIsUploadingGif(true)
-    const formData = new FormData()
-    formData.append('file', file)
 
     try {
-      const res = await fetch('/api/videos/gif-upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const supabase = createClient()
 
-      if (!res.ok) {
-        // Пытаемся получить JSON ошибку
-        let errorMessage = 'Ошибка загрузки'
-        
-        // Проверяем Content-Type перед парсингом JSON
-        const contentType = res.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const errorData = await res.json()
-            errorMessage = errorData.error || errorMessage
-          } catch {
-            // Если парсинг JSON не удался, используем статус код
-            errorMessage = `Ошибка ${res.status}: ${res.statusText}`
-          }
-        } else {
-          // Если ответ не JSON (например, HTML страница ошибки)
-          if (res.status === 413) {
-            errorMessage = 'Файл слишком большой. Максимум 50MB. Пожалуйста, используйте файл меньшего размера или оптимизируйте GIF.'
-          } else {
-            errorMessage = `Ошибка ${res.status}: ${res.statusText}`
-          }
-        }
-        throw new Error(errorMessage)
+      // Генерируем путь для GIF-превью
+      const timestamp = Date.now()
+      const randomStr = Math.random().toString(36).substring(2, 9)
+      const fileExt = file.name.split('.').pop() || 'gif'
+      const filePath = `gif-previews/${timestamp}-${randomStr}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('raw-videos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        })
+
+      if (uploadError) {
+        console.error('GIF upload error (Supabase):', uploadError)
+        throw new Error(uploadError.message || 'Ошибка загрузки GIF в Supabase Storage')
       }
 
-      const data = await res.json()
-      setGifPreviewUrl(data.url)
-      onUpdate({ gif_preview_url: data.url })
+      // Получаем публичный URL
+      const { data: publicUrlData } = supabase.storage
+        .from('raw-videos')
+        .getPublicUrl(filePath)
+
+      const url = publicUrlData.publicUrl
+      setGifPreviewUrl(url)
+      onUpdate({ gif_preview_url: url })
     } catch (error: any) {
       console.error('GIF upload error:', error)
       alert(error.message || 'Ошибка загрузки GIF')
