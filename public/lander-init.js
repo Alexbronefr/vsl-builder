@@ -116,9 +116,15 @@
     const gifPreview = document.getElementById('gif-preview');
     const gifPreviewImage = document.getElementById('gif-preview-image');
     const gifPreviewOverlay = document.getElementById('gif-preview-overlay');
+    const gifPreviewText = document.getElementById('gif-preview-text');
     if (!gifPreview || !video) {
       console.warn('GIF preview init failed:', { gifPreview: !!gifPreview, video: !!video });
       return;
+    }
+    
+    // Обновляем текст, если он настроен в конфиге
+    if (gifPreviewText && lander.video_config?.gif_preview_text) {
+      gifPreviewText.textContent = lander.video_config.gif_preview_text;
     }
 
     console.log('Initializing GIF preview, video element:', video);

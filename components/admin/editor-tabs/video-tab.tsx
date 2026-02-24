@@ -245,6 +245,19 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
                 className="w-full h-auto rounded-lg border border-gray-700"
               />
             </div>
+            <div>
+              <Label htmlFor="gif_preview_text">Текст на GIF-превью</Label>
+              <Input
+                id="gif_preview_text"
+                value={videoConfig?.gif_preview_text || 'Нажмите чтобы включить звук'}
+                onChange={(e) => onUpdate({ gif_preview_text: e.target.value })}
+                placeholder="Нажмите чтобы включить звук"
+                className="mt-2"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Текст, который отображается поверх GIF-превью
+              </p>
+            </div>
             <Button
               type="button"
               variant="destructive"

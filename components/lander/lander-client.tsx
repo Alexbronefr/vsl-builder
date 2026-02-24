@@ -527,7 +527,7 @@ export function LanderClient({
                           <line x1="2" y1="2" x2="22" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
                         </svg>
                       </div>
-                      <p id="gif-preview-text">Нажмите чтобы включить звук</p>
+                      <p id="gif-preview-text">{lander.video_config?.gif_preview_text || 'Нажмите чтобы включить звук'}</p>
                     </div>
                   </div>
                 )}
