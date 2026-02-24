@@ -333,7 +333,7 @@ export function TricksTab({ tricksConfig, onUpdate }: TricksTabProps) {
               />
             </div>
             <div>
-              <Label>Текст кнопки "Остаться"</Label>
+                <Label>Текст кнопки &quot;Остаться&quot;</Label>
               <Input
                 value={tricksConfig?.exit_intent?.button_text || 'Остаться'}
                 onChange={(e) => updateTrick('exit_intent', { button_text: e.target.value })}
