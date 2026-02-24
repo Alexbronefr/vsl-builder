@@ -697,14 +697,10 @@
     });
 
     // Время (показываем только если включено в настройках)
-    // Проверяем явно: если undefined или null, считаем что включено (по умолчанию)
-    // Если явно false, то выключено
-    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false && 
-                          lander.tricks_config?.viewers_counter?.show_watch_time !== undefined;
-    // Но если явно установлено false, то не показываем
-    const isWatchTimeDisabled = lander.tricks_config?.viewers_counter?.show_watch_time === false;
+    // По умолчанию показываем (если не установлено или true), скрываем только если явно false
+    const showWatchTime = lander.tricks_config?.viewers_counter?.show_watch_time !== false;
     let timeDisplay = null;
-    if (!isWatchTimeDisabled) {
+    if (showWatchTime) {
       timeDisplay = document.createElement('span');
       timeDisplay.id = 'elapsed-time';
       timeDisplay.style.cssText = 'color: white; font-size: 14px; min-width: 50px;';
