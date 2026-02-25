@@ -32,15 +32,39 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    const formDataString = formData.toString();
+    
+    console.log('[External Lead API Proxy] Отправка запроса на внешний API:', {
+      url: external_api_url,
+      method: 'POST',
+      content_type: 'application/x-www-form-urlencoded',
+      payload_keys: Object.keys(payload),
+      payload_count: Object.keys(payload).length,
+      form_data_length: formDataString.length,
+      form_data_preview: formDataString.substring(0, 200) + (formDataString.length > 200 ? '...' : ''),
+      timestamp: new Date().toISOString()
+    });
+    
     const response = await fetch(external_api_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: formData.toString(),
+      body: formDataString,
     })
 
     const responseText = await response.text()
+    
+    console.log('[External Lead API Proxy] Ответ от внешнего API:', {
+      url: external_api_url,
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      response_length: responseText.length,
+      response_preview: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+      headers: Object.fromEntries(response.headers.entries()),
+      timestamp: new Date().toISOString()
+    });
 
     // Возвращаем статус и ответ от внешнего API
     return NextResponse.json(
@@ -53,10 +77,21 @@ export async function POST(request: NextRequest) {
       { status: response.ok ? 200 : response.status }
     )
   } catch (error: any) {
-    console.error('[External Lead API Proxy] Error:', error)
+    console.error('[External Lead API Proxy] Критическая ошибка:', {
+      error: error,
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      external_api_url: body?.external_api_url,
+      payload_keys: body?.payload ? Object.keys(body.payload) : [],
+      timestamp: new Date().toISOString()
+    });
+    
     return NextResponse.json(
       {
+        success: false,
         error: error.message || 'Failed to send to external API',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )
