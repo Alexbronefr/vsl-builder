@@ -1922,10 +1922,25 @@
             console.warn('[External Lead API] Поле фамилии (last_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
           }
           // Логирование для отладки (подробное)
+          // Проверяем наличие обязательных полей для API
+          const requiredFields = {
+            name: externalPayload.name || 'ОТСУТСТВУЕТ',
+            last: externalPayload.last || 'ОТСУТСТВУЕТ',
+            email: externalPayload.email || 'ОТСУТСТВУЕТ',
+            phone: externalPayload.phone || 'ОТСУТСТВУЕТ',
+            token: externalPayload.token || 'ОТСУТСТВУЕТ',
+            funnel: externalPayload.funnel || 'ОТСУТСТВУЕТ',
+            affid: externalPayload.affid || 'ОТСУТСТВУЕТ',
+            subid: externalPayload.subid || 'ОТСУТСТВУЕТ (из URL)',
+            adset_name: externalPayload.adset_name || 'ОТСУТСТВУЕТ (из URL)'
+          };
+          
+          console.log('[External Lead API] Проверка обязательных полей:', requiredFields);
           console.log('[External Lead API] Отправка данных через прокси:', {
             external_url: externalUrl,
             payload: externalPayload,
             payload_keys: Object.keys(externalPayload),
+            required_fields_check: requiredFields,
             timestamp: new Date().toISOString()
           });
           console.log('[External Lead API] Полный payload:', JSON.stringify(externalPayload, null, 2));
@@ -1942,11 +1957,30 @@
           })
           .then(function (response) {
             return response.json().then(function (result) {
+              // Пытаемся распарсить PHP-ответ, если это возможно
+              let parsedResponse = result.response;
+              try {
+                // Если ответ содержит PHP print_r или var_dump, пытаемся извлечь информацию
+                if (typeof result.response === 'string' && result.response.includes('Array')) {
+                  // Логируем как есть, но также пытаемся найти ошибки
+                  const errorMatch = result.response.match(/\[errors\]\s*=>\s*Array\s*\(([^)]+)\)/s);
+                  if (errorMatch) {
+                    console.error('[External Lead API] Обнаружены ошибки в ответе API:', {
+                      error_section: errorMatch[0],
+                      full_response: result.response
+                    });
+                  }
+                }
+              } catch (parseErr) {
+                console.warn('[External Lead API] Не удалось распарсить ответ:', parseErr);
+              }
+              
               console.log('[External Lead API] Ответ получен через прокси:', {
                 success: result.success,
                 status: result.status,
                 statusText: result.statusText,
-                response: result.response,
+                response_full: result.response, // Полный ответ для отладки
+                response_length: result.response ? result.response.length : 0,
                 external_url: externalUrl
               });
             }).catch(function (jsonErr) {

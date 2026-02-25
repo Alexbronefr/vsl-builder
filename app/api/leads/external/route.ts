@@ -80,13 +80,14 @@ export async function POST(request: NextRequest) {
 
     const responseText = await response.text()
     
+    // Логируем полный ответ (без ограничения длины)
     console.log('[External Lead API Proxy] Ответ от внешнего API:', {
       url: external_api_url,
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
       response_length: responseText.length,
-      response_preview: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''),
+      response_full: responseText, // Полный ответ для отладки
       headers: Object.fromEntries(response.headers.entries()),
       timestamp: new Date().toISOString()
     });
