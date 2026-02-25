@@ -5,8 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
  * Используется для обхода Mixed Content (HTTPS -> HTTP)
  */
 export async function POST(request: NextRequest) {
+  let body: any = null;
+  
   try {
-    const body = await request.json()
+    body = await request.json()
     const { external_api_url, payload } = body
 
     if (!external_api_url) {
