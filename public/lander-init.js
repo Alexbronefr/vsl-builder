@@ -1733,7 +1733,7 @@
           // Ищем поле телефона в данных формы
           for (const [key, value] of Object.entries(data)) {
             // Проверяем тип поля из конфига формы
-            const fieldConfig = lander.form_config?.fields?.find((f: any) => f.name === key);
+            const fieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === key; });
             if (fieldConfig && fieldConfig.type === 'tel') {
               phoneValue = value;
               phoneFieldName = key;
