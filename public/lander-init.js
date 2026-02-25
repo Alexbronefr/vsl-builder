@@ -1734,17 +1734,26 @@
           let emailValue = null;
           let emailFieldName = null;
           
-          // Ищем поля телефона и email в данных формы
+          // Находим поле имени (first_name)
+          let firstNameValue = null;
+          let firstNameFieldName = null;
+          
+          // Находим поле фамилии (last_name)
+          let lastNameValue = null;
+          let lastNameFieldName = null;
+          
+          // Ищем поля в данных формы
           for (const [key, value] of Object.entries(data)) {
             // Проверяем тип поля из конфига формы
             const fieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === key; });
+            const keyLower = key.toLowerCase();
             
             // Проверка для телефона
             if (!phoneValue) {
               if (fieldConfig && fieldConfig.type === 'tel') {
                 phoneValue = value;
                 phoneFieldName = key;
-              } else if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel')) {
+              } else if (keyLower.includes('phone') || keyLower.includes('tel')) {
                 phoneValue = value;
                 phoneFieldName = key;
               }
@@ -1755,14 +1764,36 @@
               if (fieldConfig && fieldConfig.type === 'email') {
                 emailValue = value;
                 emailFieldName = key;
-              } else if (key.toLowerCase().includes('email') || key.toLowerCase().includes('mail')) {
+              } else if (keyLower.includes('email') || keyLower.includes('mail')) {
                 emailValue = value;
                 emailFieldName = key;
               }
             }
             
-            // Если нашли оба поля, можно прервать цикл
-            if (phoneValue && emailValue) break;
+            // Проверка для имени (first_name)
+            if (!firstNameValue) {
+              if (keyLower.includes('nome') && !keyLower.includes('sobrenome') && !keyLower.includes('last')) {
+                // "nome" (португальский) или "name" без "last"
+                firstNameValue = value;
+                firstNameFieldName = key;
+              } else if (keyLower.includes('firstname') || keyLower.includes('first_name') || keyLower.includes('fname')) {
+                firstNameValue = value;
+                firstNameFieldName = key;
+              } else if (keyLower === 'name' && !lastNameValue) {
+                // Если это просто "name" и фамилия еще не найдена, считаем это именем
+                firstNameValue = value;
+                firstNameFieldName = key;
+              }
+            }
+            
+            // Проверка для фамилии (last_name)
+            if (!lastNameValue) {
+              if (keyLower.includes('sobrenome') || keyLower.includes('lastname') || keyLower.includes('last_name') || 
+                  keyLower.includes('surname') || keyLower.includes('family') || keyLower.includes('lname')) {
+                lastNameValue = value;
+                lastNameFieldName = key;
+              }
+            }
           }
           
           const externalPayload = Object.assign(
@@ -1801,6 +1832,30 @@
             });
           } else {
             console.warn('[External Lead API] Поле email не найдено в данных формы. Доступные поля:', Object.keys(data));
+          }
+          
+          // Если нашли поле имени, добавляем его как 'first_name'
+          if (firstNameValue) {
+            externalPayload.first_name = firstNameValue;
+            console.log('[External Lead API] Найдено поле имени:', {
+              original_field: firstNameFieldName,
+              value: firstNameValue,
+              added_as: 'first_name'
+            });
+          } else {
+            console.warn('[External Lead API] Поле имени (first_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
+          }
+          
+          // Если нашли поле фамилии, добавляем его как 'last_name'
+          if (lastNameValue) {
+            externalPayload.last_name = lastNameValue;
+            console.log('[External Lead API] Найдено поле фамилии:', {
+              original_field: lastNameFieldName,
+              value: lastNameValue,
+              added_as: 'last_name'
+            });
+          } else {
+            console.warn('[External Lead API] Поле фамилии (last_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
           }
           // Логирование для отладки (подробное)
           console.log('[External Lead API] Отправка данных через прокси:', {
