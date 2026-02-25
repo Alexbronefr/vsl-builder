@@ -53,6 +53,20 @@ export async function POST(request: NextRequest) {
       formDataObject[key] = value;
     });
     
+    // Проверяем наличие критически важных полей для API
+    const criticalFields = {
+      name: formDataObject['name'] || 'ОТСУТСТВУЕТ',
+      last: formDataObject['last'] || 'ОТСУТСТВУЕТ',
+      email: formDataObject['email'] || 'ОТСУТСТВУЕТ',
+      phone: formDataObject['phone'] || 'ОТСУТСТВУЕТ',
+      token: formDataObject['token'] || 'ОТСУТСТВУЕТ',
+      funnel: formDataObject['funnel'] || 'ОТСУТСТВУЕТ',
+      affid: formDataObject['affid'] || 'ОТСУТСТВУЕТ',
+      subid: formDataObject['subid'] || 'ОТСУТСТВУЕТ (может быть обязательным!)',
+      adset_name: formDataObject['adset_name'] || 'ОТСУТСТВУЕТ'
+    };
+    
+    console.log('[External Lead API Proxy] Проверка критически важных полей:', criticalFields);
     console.log('[External Lead API Proxy] Отправка запроса на внешний API:', {
       url: external_api_url,
       method: 'POST',
@@ -62,6 +76,7 @@ export async function POST(request: NextRequest) {
       form_data_length: formDataString.length,
       form_data_full: formDataString, // Полный form-data для отладки
       form_data_object: formDataObject, // Объект с ключами и значениями
+      critical_fields_check: criticalFields,
       lastNameFields: lastNameFields,
       lastNameFieldsValues: lastNameFields.reduce(function(acc: Record<string, any>, key: string) {
         acc[key] = payloadTyped[key];
