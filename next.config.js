@@ -7,6 +7,24 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  async headers() {
+    return [
+      {
+        // Разрешаем встраивание только для embed-роутов
+        source: '/embed/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: 'frame-ancestors *',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig

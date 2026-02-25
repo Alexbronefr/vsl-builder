@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VSL Landing</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0F0F0F; color: #fff; font-family: Arial, sans-serif; }
+    
+    .video-container {
+      max-width: 800px;
+      margin: 40px auto 0;
+      aspect-ratio: 16/9;
+    }
+    
+    .video-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Форма скрыта по умолчанию */
+    .form-section {
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 30px;
+      background: #1A1A2E;
+      border-radius: 12px;
+    }
+    
+    .form-section.hide { display: none; }
+    .form-section.video-open-form { filter: blur(12px); pointer-events: none; }
+    .form-section.video-open-form-open { filter: none; pointer-events: auto; }
+    
+    input { 
+      width: 100%; padding: 14px; margin: 8px 0;
+      background: #2A2A3E; border: 1px solid #333; 
+      border-radius: 8px; color: #fff; font-size: 16px;
+    }
+    
+    button {
+      width: 100%; padding: 16px; margin-top: 12px;
+      background: #EF4444; color: #fff; border: none;
+      border-radius: 8px; font-size: 18px; font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 style="text-align:center; padding:20px;">Заголовок VSL</h1>
+  
+  <div class="video-container">
+    <iframe 
+      id="vsl-player"
+      src="https://your-vercel-app.com/embed/VIDEO_ID_HERE?milestones=60,600,end&formTime=1500&color=EF4444&blockSeek=true&nonlinear=0.6"
+      allow="autoplay; encrypted-media"
+      allowfullscreen>
+    </iframe>
+  </div>
+
+  <!-- Форма: начинает с классом video-open-form (заблюрена) -->
+  <div class="form-section video-open-form" id="leadForm">
+    <h2>Заполните форму</h2>
+    <input type="text" name="first_name" placeholder="Имя" required>
+    <input type="text" name="last_name" placeholder="Фамилия" required>
+    <input type="tel" name="phone" placeholder="Телефон" required>
+    <button type="submit" id="submitBtn">Отправить</button>
+  </div>
+
+  <script>
+    const form = document.getElementById('leadForm');
+    const iframe = document.getElementById('vsl-player');
+    
+    // Слушаем события от плеера
+    window.addEventListener('message', (event) => {
+      // Проверяем что сообщение от нашего плеера
+      if (event.data?.source !== 'vsl-player') return;
+      
+      const { type, data } = event.data;
+      
+      switch (type) {
+        case 'video:ready':
+          console.log('Плеер готов, длительность:', data.duration);
+          break;
+          
+        case 'video:milestone':
+          console.log('Milestone достигнут:', data.milestone);
+          // Тут можно делать что угодно: показать блок, отправить аналитику
+          break;
+          
+        case 'video:form-show':
+          // Разблюрить форму
+          form.classList.remove('video-open-form');
+          form.classList.add('video-open-form-open');
+          break;
+          
+        case 'video:ended':
+          console.log('Видео закончилось');
+          break;
+          
+        case 'video:timeupdate':
+          // data.time, data.percent, data.duration
+          break;
+      }
+    });
+    
+    // Пример отправки команды плееру
+    // iframe.contentWindow.postMessage({ target: 'vsl-player', command: 'pause' }, '*');
+  </script>
+
+</body>
+</html>
+
