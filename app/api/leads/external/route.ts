@@ -24,12 +24,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Отправляем запрос с сервера (где нет ограничений Mixed Content)
+    // Пробуем сначала как form-data (application/x-www-form-urlencoded), так как многие CRM ожидают именно такой формат
+    const formData = new URLSearchParams();
+    for (const [key, value] of Object.entries(payload)) {
+      if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    }
+    
     const response = await fetch(external_api_url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(payload),
+      body: formData.toString(),
     })
 
     const responseText = await response.text()
