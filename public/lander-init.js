@@ -1736,39 +1736,44 @@
             }
           );
           // Логирование для отладки
-          console.log('[External Lead API] Отправка данных:', {
-            url: externalUrl,
+          console.log('[External Lead API] Отправка данных через прокси:', {
+            external_url: externalUrl,
             payload: externalPayload,
             timestamp: new Date().toISOString()
           });
           
-          fetch(externalUrl, {
+          // Отправляем через наш прокси-роут, чтобы обойти Mixed Content (HTTPS -> HTTP)
+          fetch('/api/leads/external', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(externalPayload),
+            body: JSON.stringify({
+              external_api_url: externalUrl,
+              payload: externalPayload,
+            }),
             keepalive: true,
           })
           .then(function (response) {
-            console.log('[External Lead API] Ответ получен:', {
-              status: response.status,
-              statusText: response.statusText,
-              ok: response.ok,
-              url: externalUrl
-            });
-            // Пытаемся прочитать ответ (если есть)
-            return response.text().then(text => {
-              if (text) {
-                console.log('[External Lead API] Тело ответа:', text);
-              }
-            }).catch(() => {
-              // Игнорируем ошибки чтения ответа
+            return response.json().then(function (result) {
+              console.log('[External Lead API] Ответ получен через прокси:', {
+                success: result.success,
+                status: result.status,
+                statusText: result.statusText,
+                response: result.response,
+                external_url: externalUrl
+              });
+            }).catch(function (jsonErr) {
+              console.log('[External Lead API] Ответ получен (статус):', {
+                status: response.status,
+                statusText: response.statusText,
+                external_url: externalUrl
+              });
             });
           })
           .catch(function (err) {
-            console.error('[External Lead API] Ошибка отправки:', {
+            console.error('[External Lead API] Ошибка отправки через прокси:', {
               error: err,
               message: err.message,
-              url: externalUrl,
+              external_url: externalUrl,
               payload: externalPayload
             });
           });
