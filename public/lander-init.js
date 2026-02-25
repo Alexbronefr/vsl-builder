@@ -1959,21 +1959,44 @@
             return response.json().then(function (result) {
               // Пытаемся распарсить PHP-ответ, если это возможно
               let parsedResponse = result.response;
+              let errorMessages = [];
+              
               try {
                 // Если ответ содержит PHP print_r или var_dump, пытаемся извлечь информацию
                 if (typeof result.response === 'string' && result.response.includes('Array')) {
-                  // Логируем как есть, но также пытаемся найти ошибки
-                  const errorMatch = result.response.match(/\[errors\]\s*=>\s*Array\s*\(([^)]+)\)/s);
-                  if (errorMatch) {
-                    console.error('[External Lead API] Обнаружены ошибки в ответе API:', {
-                      error_section: errorMatch[0],
-                      full_response: result.response
-                    });
+                  // Ищем все ошибки в массиве errors
+                  // Паттерн: [0] => "текст ошибки"
+                  const errorPattern = /\[\d+\]\s*=>\s*"([^"]+)"/g;
+                  let match;
+                  while ((match = errorPattern.exec(result.response)) !== null) {
+                    errorMessages.push(match[1]);
+                  }
+                  
+                  // Если не нашли через паттерн с кавычками, пробуем без кавычек
+                  if (errorMessages.length === 0) {
+                    const errorMatch = result.response.match(/\[errors\]\s*=>\s*Array\s*\(([\s\S]*?)\)/);
+                    if (errorMatch) {
+                      // Пытаемся извлечь текст между [0] => и следующей строкой
+                      const errorContent = errorMatch[1];
+                      const singleErrorMatch = errorContent.match(/\[\d+\]\s*=>\s*(.+?)(?:\n|$)/);
+                      if (singleErrorMatch) {
+                        errorMessages.push(singleErrorMatch[1].trim());
+                      }
+                    }
+                  }
+                  
+                  if (errorMessages.length > 0) {
+                    console.error('[External Lead API] ❌ ОШИБКИ ОТ API:', errorMessages);
+                    console.error('[External Lead API] Полный текст ошибок:', errorMessages.join(' | '));
                   }
                 }
               } catch (parseErr) {
                 console.warn('[External Lead API] Не удалось распарсить ответ:', parseErr);
               }
+              
+              // Выводим полный ответ отдельно для удобства
+              console.log('[External Lead API] Полный ответ от API (для копирования):');
+              console.log(result.response);
               
               console.log('[External Lead API] Ответ получен через прокси:', {
                 success: result.success,
@@ -1981,6 +2004,7 @@
                 statusText: result.statusText,
                 response_full: result.response, // Полный ответ для отладки
                 response_length: result.response ? result.response.length : 0,
+                errors_found: errorMessages.length > 0 ? errorMessages : 'Нет ошибок',
                 external_url: externalUrl
               });
             }).catch(function (jsonErr) {
