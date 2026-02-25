@@ -14,6 +14,7 @@ interface FormTabProps {
 
 export function FormTab({ formConfig, onUpdate }: FormTabProps) {
   const fields = formConfig?.fields || []
+  const hiddenFields = formConfig?.hidden_fields || []
 
   const updateField = (index: number, updates: any) => {
     const newFields = [...fields]
@@ -42,6 +43,28 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
   const removeField = (index: number) => {
     const newFields = fields.filter((_: any, i: number) => i !== index)
     onUpdate({ fields: newFields })
+  }
+
+  const addHiddenField = () => {
+    const newHiddenFields = [
+      ...hiddenFields,
+      {
+        url_param: '',
+        field_name: '',
+      },
+    ]
+    onUpdate({ hidden_fields: newHiddenFields })
+  }
+
+  const updateHiddenField = (index: number, updates: any) => {
+    const newHiddenFields = [...hiddenFields]
+    newHiddenFields[index] = { ...newHiddenFields[index], ...updates }
+    onUpdate({ hidden_fields: newHiddenFields })
+  }
+
+  const removeHiddenField = (index: number) => {
+    const newHiddenFields = hiddenFields.filter((_: any, i: number) => i !== index)
+    onUpdate({ hidden_fields: newHiddenFields })
   }
 
   const defaultFields = [
@@ -221,6 +244,95 @@ export function FormTab({ formConfig, onUpdate }: FormTabProps) {
           }
           className="mt-2"
         />
+      </div>
+
+      <div className="border-t pt-6 mt-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Интеграция с внешним API</h3>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="external_api_url">API URL для отправки лидов</Label>
+            <Input
+              id="external_api_url"
+              type="url"
+              value={formConfig?.external_api_url || ''}
+              onChange={(e) => onUpdate({ external_api_url: e.target.value })}
+              placeholder="https://your-crm.com/lead"
+              className="mt-2"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              URL, куда отправлять данные формы POST-запросом в формате JSON
+            </p>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <Label>Скрытые поля (из URL-параметров)</Label>
+                <p className="text-xs text-gray-500">
+                  Эти поля не видны пользователю, но отправляются вместе с формой. Значения берутся из параметров URL
+                  (например, subid, clickid, fbclid).
+                </p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={addHiddenField}>
+                <Plus className="mr-1 h-3 w-3" />
+                Добавить скрытое поле
+              </Button>
+            </div>
+
+            {hiddenFields.length === 0 && (
+              <p className="text-xs text-gray-500">
+                Пока нет скрытых полей. Нажмите &quot;Добавить скрытое поле&quot;, чтобы создать первое.
+              </p>
+            )}
+
+            <div className="space-y-3 mt-3">
+              {hiddenFields.map((field: any, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900/40 p-3"
+                >
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Название параметра в URL</Label>
+                      <Input
+                        value={field.url_param || ''}
+                        onChange={(e) => updateHiddenField(index, { url_param: e.target.value })}
+                        placeholder="subid"
+                        className="mt-1"
+                      />
+                      <p className="mt-1 text-[10px] text-gray-500">
+                        Например: subid, clickid, fbclid, utm_source и т.д.
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Имя поля в отправке</Label>
+                      <Input
+                        value={field.field_name || ''}
+                        onChange={(e) => updateHiddenField(index, { field_name: e.target.value })}
+                        placeholder="sub_id"
+                        className="mt-1"
+                      />
+                      <p className="mt-1 text-[10px] text-gray-500">
+                        Как поле будет называться в отправляемом JSON. Если не заполнено, используется имя параметра
+                        URL.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mt-5 text-gray-400 hover:text-red-400"
+                    onClick={() => removeHiddenField(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="border-t pt-6 mt-6">

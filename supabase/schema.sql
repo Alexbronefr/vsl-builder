@@ -55,7 +55,9 @@ CREATE TABLE landers (
     ],
     "submit_button_text": "Зарегистрироваться",
     "redirect_url": "",
-    "redirect_delay_seconds": 3
+    "redirect_delay_seconds": 3,
+    "external_api_url": "",
+    "hidden_fields": []
   }'::jsonb,
   
   -- Психологические фишки (все тогглы)

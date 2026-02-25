@@ -18,6 +18,7 @@
   let maxWatchedTime = 0;
   let sessionId = generateSessionId();
   let eventBuffer = [];
+  let CLICK_PARAMS = {};
 
   // Инициализация после загрузки DOM и появления элемента #player
   function waitForPlayer(callback, maxAttempts = 50) {
@@ -68,6 +69,15 @@
     if (!video) {
       console.error('Video element not found');
       return;
+    }
+
+    // Сохраняем все параметры из URL (для внешних интеграций / Keitaro и т.д.)
+    try {
+      CLICK_PARAMS = Object.fromEntries(new URLSearchParams(window.location.search));
+      window.CLICK_PARAMS = CLICK_PARAMS;
+    } catch (err) {
+      console.warn('Failed to parse URL params for CLICK_PARAMS', err);
+      CLICK_PARAMS = {};
     }
 
     // Защита от скачивания (если включена)
@@ -1654,6 +1664,30 @@
         navigator.vibrate(10);
       }
 
+      // Перед сбором FormData проставляем значения скрытых полей из URL-параметров
+      try {
+        if (lander.form_config?.hidden_fields && Array.isArray(lander.form_config.hidden_fields)) {
+          lander.form_config.hidden_fields.forEach(function (field) {
+            if (!field) return;
+            const urlParam = field.url_param;
+            const fieldName = field.field_name || urlParam;
+            if (!urlParam || !fieldName) return;
+            let input = form.querySelector('input[name="' + fieldName + '"]');
+            if (!input) {
+              input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = fieldName;
+              form.appendChild(input);
+            }
+            if (CLICK_PARAMS && typeof CLICK_PARAMS === 'object' && CLICK_PARAMS[urlParam] !== undefined) {
+              input.value = CLICK_PARAMS[urlParam];
+            }
+          });
+        }
+      } catch (hiddenErr) {
+        console.warn('Error while filling hidden fields from URL params', hiddenErr);
+      }
+
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
 
@@ -1683,6 +1717,24 @@
         utm_term: urlParams.get('utm_term') || '',
         utm_content: urlParams.get('utm_content') || '',
       };
+
+      // Отправка во внешний API (fire-and-forget), если настроен external_api_url
+      try {
+        const externalUrl = lander.form_config?.external_api_url;
+        if (externalUrl) {
+          const externalPayload = Object.assign({}, data, CLICK_PARAMS || {});
+          fetch(externalUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(externalPayload),
+            keepalive: true,
+          }).catch(function (err) {
+            console.warn('External lead API error', err);
+          });
+        }
+      } catch (extErr) {
+        console.warn('Failed to send data to external API', extErr);
+      }
 
       try {
         const response = await fetch('/api/leads', {

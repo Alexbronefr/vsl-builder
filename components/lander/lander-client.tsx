@@ -618,6 +618,14 @@ export function LanderClient({
                       />
                     </div>
                   ))}
+
+                {Array.isArray(formConfig.hidden_fields) &&
+                  formConfig.hidden_fields.map((field: any, index: number) => {
+                    const name = field.field_name || field.url_param
+                    if (!name) return null
+                    return <input key={`hidden-${index}-${name}`} type="hidden" name={name} />
+                  })}
+
                 <button type="submit" id="cta-button">
                   {formConfig.submit_button_text || 'Зарегистрироваться'}
                 </button>
