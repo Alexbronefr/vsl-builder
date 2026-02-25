@@ -2359,6 +2359,20 @@
     }
   }
 
+  // Простая заглушка для fullscreen-подсказки на мобильных, чтобы не ломать initTricks
+  function initFullscreenPrompt() {
+    try {
+      if (!video) return;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isMobile) return;
+
+      console.log('Fullscreen prompt (mobile) initialized');
+      // Здесь можно позже добавить реальную подсказку, пока просто заглушка
+    } catch (err) {
+      console.warn('Fullscreen prompt init error', err);
+    }
+  }
+
   function sendAnalytics(eventType, eventData) {
     eventBuffer.push({
       lander_id: lander.id,
