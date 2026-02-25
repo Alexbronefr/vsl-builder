@@ -1850,15 +1850,16 @@
             console.warn('[External Lead API] Поле email не найдено в данных формы. Доступные поля:', Object.keys(data));
           }
           
-          // Если нашли поле имени, добавляем его как 'first_name'
+          // Если нашли поле имени, добавляем его как 'first_name' и 'firstname' (для совместимости)
           if (firstNameValue) {
             const firstNameFieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === firstNameFieldName; });
             externalPayload.first_name = firstNameValue;
+            externalPayload.firstname = firstNameValue; // Альтернативный вариант без подчеркивания
             console.log('[External Lead API] Найдено поле имени:', {
               original_field: firstNameFieldName,
               label: firstNameFieldConfig?.label || 'N/A',
               value: firstNameValue,
-              added_as: 'first_name'
+              added_as: 'first_name и firstname'
             });
           } else {
             console.warn('[External Lead API] Поле имени (first_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
@@ -1870,15 +1871,16 @@
             }
           }
           
-          // Если нашли поле фамилии, добавляем его как 'last_name'
+          // Если нашли поле фамилии, добавляем его как 'last_name' и 'lastname' (для совместимости)
           if (lastNameValue) {
             const lastNameFieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === lastNameFieldName; });
             externalPayload.last_name = lastNameValue;
+            externalPayload.lastname = lastNameValue; // Альтернативный вариант без подчеркивания
             console.log('[External Lead API] Найдено поле фамилии:', {
               original_field: lastNameFieldName,
               label: lastNameFieldConfig?.label || 'N/A',
               value: lastNameValue,
-              added_as: 'last_name'
+              added_as: 'last_name и lastname'
             });
           } else {
             console.warn('[External Lead API] Поле фамилии (last_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
