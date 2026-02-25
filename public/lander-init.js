@@ -1726,6 +1726,27 @@
       try {
         const externalUrl = lander.form_config?.external_api_url;
         if (externalUrl) {
+          // Находим поле телефона (по типу tel или имени содержащему phone)
+          let phoneValue = null;
+          let phoneFieldName = null;
+          
+          // Ищем поле телефона в данных формы
+          for (const [key, value] of Object.entries(data)) {
+            // Проверяем тип поля из конфига формы
+            const fieldConfig = lander.form_config?.fields?.find((f: any) => f.name === key);
+            if (fieldConfig && fieldConfig.type === 'tel') {
+              phoneValue = value;
+              phoneFieldName = key;
+              break;
+            }
+            // Или проверяем по имени поля
+            if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel')) {
+              phoneValue = value;
+              phoneFieldName = key;
+              break;
+            }
+          }
+          
           const externalPayload = Object.assign(
             {},
             data,
@@ -1739,6 +1760,18 @@
               token: 'hEH0WcWMhlTe5DXjGn3a',
             }
           );
+          
+          // Если нашли поле телефона, добавляем его как 'phone' (даже если оно уже есть под другим именем)
+          if (phoneValue) {
+            externalPayload.phone = phoneValue;
+            console.log('[External Lead API] Найдено поле телефона:', {
+              original_field: phoneFieldName,
+              value: phoneValue,
+              added_as: 'phone'
+            });
+          } else {
+            console.warn('[External Lead API] Поле телефона не найдено в данных формы. Доступные поля:', Object.keys(data));
+          }
           // Логирование для отладки (подробное)
           console.log('[External Lead API] Отправка данных через прокси:', {
             external_url: externalUrl,
