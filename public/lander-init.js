@@ -1730,21 +1730,39 @@
           let phoneValue = null;
           let phoneFieldName = null;
           
-          // Ищем поле телефона в данных формы
+          // Находим поле email (по типу email или имени содержащему email)
+          let emailValue = null;
+          let emailFieldName = null;
+          
+          // Ищем поля телефона и email в данных формы
           for (const [key, value] of Object.entries(data)) {
             // Проверяем тип поля из конфига формы
             const fieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === key; });
-            if (fieldConfig && fieldConfig.type === 'tel') {
-              phoneValue = value;
-              phoneFieldName = key;
-              break;
+            
+            // Проверка для телефона
+            if (!phoneValue) {
+              if (fieldConfig && fieldConfig.type === 'tel') {
+                phoneValue = value;
+                phoneFieldName = key;
+              } else if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel')) {
+                phoneValue = value;
+                phoneFieldName = key;
+              }
             }
-            // Или проверяем по имени поля
-            if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel')) {
-              phoneValue = value;
-              phoneFieldName = key;
-              break;
+            
+            // Проверка для email
+            if (!emailValue) {
+              if (fieldConfig && fieldConfig.type === 'email') {
+                emailValue = value;
+                emailFieldName = key;
+              } else if (key.toLowerCase().includes('email') || key.toLowerCase().includes('mail')) {
+                emailValue = value;
+                emailFieldName = key;
+              }
             }
+            
+            // Если нашли оба поля, можно прервать цикл
+            if (phoneValue && emailValue) break;
           }
           
           const externalPayload = Object.assign(
@@ -1771,6 +1789,18 @@
             });
           } else {
             console.warn('[External Lead API] Поле телефона не найдено в данных формы. Доступные поля:', Object.keys(data));
+          }
+          
+          // Если нашли поле email, добавляем его как 'email' (даже если оно уже есть под другим именем)
+          if (emailValue) {
+            externalPayload.email = emailValue;
+            console.log('[External Lead API] Найдено поле email:', {
+              original_field: emailFieldName,
+              value: emailValue,
+              added_as: 'email'
+            });
+          } else {
+            console.warn('[External Lead API] Поле email не найдено в данных формы. Доступные поля:', Object.keys(data));
           }
           // Логирование для отладки (подробное)
           console.log('[External Lead API] Отправка данных через прокси:', {
