@@ -1690,6 +1690,10 @@
 
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
+      
+      // Логирование данных формы для отладки
+      console.log('[Form Submit] Данные формы:', data);
+      console.log('[Form Submit] Ключи полей:', Object.keys(data));
 
       const ctaButton = document.getElementById('cta-button');
       if (ctaButton) {
@@ -1735,12 +1739,14 @@
               token: 'hEH0WcWMhlTe5DXjGn3a',
             }
           );
-          // Логирование для отладки
+          // Логирование для отладки (подробное)
           console.log('[External Lead API] Отправка данных через прокси:', {
             external_url: externalUrl,
             payload: externalPayload,
+            payload_keys: Object.keys(externalPayload),
             timestamp: new Date().toISOString()
           });
+          console.log('[External Lead API] Полный payload:', JSON.stringify(externalPayload, null, 2));
           
           // Отправляем через наш прокси-роут, чтобы обойти Mixed Content (HTTPS -> HTTP)
           fetch('/api/leads/external', {
