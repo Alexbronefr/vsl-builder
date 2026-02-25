@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
     const formDataString = formData.toString();
     
     // Логируем все поля, связанные с фамилией, для отладки
-    const lastNameFields = Object.keys(payload).filter(key => 
+    const payloadTyped = payload as Record<string, any>;
+    const lastNameFields = Object.keys(payloadTyped).filter(key => 
       key.toLowerCase().includes('last') || 
       key.toLowerCase().includes('surname') || 
       key.toLowerCase().includes('family') ||
@@ -49,15 +50,15 @@ export async function POST(request: NextRequest) {
       url: external_api_url,
       method: 'POST',
       content_type: 'application/x-www-form-urlencoded',
-      payload_keys: Object.keys(payload),
-      payload_count: Object.keys(payload).length,
+      payload_keys: Object.keys(payloadTyped),
+      payload_count: Object.keys(payloadTyped).length,
       form_data_length: formDataString.length,
       form_data_preview: formDataString.substring(0, 500) + (formDataString.length > 500 ? '...' : ''),
       lastNameFields: lastNameFields,
-      lastNameFieldsValues: lastNameFields.reduce(function(acc, key) {
-        acc[key] = payload[key];
+      lastNameFieldsValues: lastNameFields.reduce(function(acc: Record<string, any>, key: string) {
+        acc[key] = payloadTyped[key];
         return acc;
-      }, {}),
+      }, {} as Record<string, any>),
       timestamp: new Date().toISOString()
     });
     
