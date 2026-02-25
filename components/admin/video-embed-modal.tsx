@@ -269,7 +269,7 @@ window.addEventListener('message', function(event) {
                   className="mt-1 text-xs"
                 />
                 <p className="mt-1 text-[11px] text-gray-500">
-                  Через запятую, в секундах. "end" = конец видео (событие video:milestone).
+                  Через запятую, в секундах. &quot;end&quot; = конец видео (событие video:milestone).
                 </p>
               </div>
             </div>
