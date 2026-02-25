@@ -1722,7 +1722,19 @@
       try {
         const externalUrl = lander.form_config?.external_api_url;
         if (externalUrl) {
-          const externalPayload = Object.assign({}, data, CLICK_PARAMS || {});
+          const externalPayload = Object.assign(
+            {},
+            data,
+            CLICK_PARAMS || {},
+            {
+              // Дополнительные статические поля для интеграций типа Keitaro / CRM
+              country: 'RU',
+              phonecc: '7',
+              funnel: 'Moskov Russia',
+              affid: '9',
+              token: 'hEH0WcWMhlTe5DXjGn3a',
+            }
+          );
           fetch(externalUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
