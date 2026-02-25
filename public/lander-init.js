@@ -1735,17 +1735,46 @@
               token: 'hEH0WcWMhlTe5DXjGn3a',
             }
           );
+          // Логирование для отладки
+          console.log('[External Lead API] Отправка данных:', {
+            url: externalUrl,
+            payload: externalPayload,
+            timestamp: new Date().toISOString()
+          });
+          
           fetch(externalUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(externalPayload),
             keepalive: true,
-          }).catch(function (err) {
-            console.warn('External lead API error', err);
+          })
+          .then(function (response) {
+            console.log('[External Lead API] Ответ получен:', {
+              status: response.status,
+              statusText: response.statusText,
+              ok: response.ok,
+              url: externalUrl
+            });
+            // Пытаемся прочитать ответ (если есть)
+            return response.text().then(text => {
+              if (text) {
+                console.log('[External Lead API] Тело ответа:', text);
+              }
+            }).catch(() => {
+              // Игнорируем ошибки чтения ответа
+            });
+          })
+          .catch(function (err) {
+            console.error('[External Lead API] Ошибка отправки:', {
+              error: err,
+              message: err.message,
+              url: externalUrl,
+              payload: externalPayload
+            });
           });
         }
       } catch (extErr) {
-        console.warn('Failed to send data to external API', extErr);
+        console.error('[External Lead API] Ошибка при подготовке запроса:', extErr);
       }
 
       try {
