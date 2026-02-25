@@ -1852,6 +1852,12 @@
       }
 
       try {
+        console.log('[Form Submit] Отправка лида в Supabase...', {
+          lander_id: lander.id,
+          fields_count: Object.keys(data).length,
+          fields: Object.keys(data)
+        });
+        
         const response = await fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1866,7 +1872,22 @@
           })
         });
 
-        if (!response.ok) throw new Error('Submit failed');
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Form Submit] Ошибка отправки в Supabase:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          throw new Error('Submit failed: ' + response.status);
+        }
+
+        const result = await response.json();
+        console.log('[Form Submit] Лид успешно сохранен в Supabase:', {
+          success: result.success,
+          lead_id: result.lead?.id,
+          saved_data: result.lead?.data
+        });
 
         sendAnalytics('form_submit', { fields: Object.keys(data) });
 
@@ -1886,6 +1907,13 @@
         }
 
       } catch (error) {
+        console.error('[Form Submit] Критическая ошибка при отправке формы:', {
+          error: error,
+          message: error.message,
+          stack: error.stack,
+          form_data: data
+        });
+        
         if (ctaButton) {
           ctaButton.disabled = false;
           ctaButton.textContent = lander.form_config?.submit_button_text || 'Зарегистрироваться';
