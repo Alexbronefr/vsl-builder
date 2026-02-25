@@ -46,6 +46,13 @@ export async function POST(request: NextRequest) {
       key.toLowerCase().includes('apellido')
     );
     
+    // Логируем полный form-data для отладки
+    const formDataEntries = Array.from(formData.entries());
+    const formDataObject: Record<string, string> = {};
+    formDataEntries.forEach(([key, value]) => {
+      formDataObject[key] = value;
+    });
+    
     console.log('[External Lead API Proxy] Отправка запроса на внешний API:', {
       url: external_api_url,
       method: 'POST',
@@ -53,7 +60,8 @@ export async function POST(request: NextRequest) {
       payload_keys: Object.keys(payloadTyped),
       payload_count: Object.keys(payloadTyped).length,
       form_data_length: formDataString.length,
-      form_data_preview: formDataString.substring(0, 500) + (formDataString.length > 500 ? '...' : ''),
+      form_data_full: formDataString, // Полный form-data для отладки
+      form_data_object: formDataObject, // Объект с ключами и значениями
       lastNameFields: lastNameFields,
       lastNameFieldsValues: lastNameFields.reduce(function(acc: Record<string, any>, key: string) {
         acc[key] = payloadTyped[key];
