@@ -1,12 +1,13 @@
-'use client'
+"use client"
 
-import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Button } from '@/components/ui/button'
-import { useEffect, useState, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Button } from "@/components/ui/button"
+import { useEffect, useState, useRef } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { VideoEmbedModal } from "@/components/admin/video-embed-modal"
 
 interface VideoTabProps {
   videoConfig: any
@@ -18,15 +19,18 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   const [gifPreviewUrl, setGifPreviewUrl] = useState(videoConfig?.gif_preview_url || '')
   const [isUploadingGif, setIsUploadingGif] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [embedOpen, setEmbedOpen] = useState(false)
+  const [embedVideoId, setEmbedVideoId] = useState<string | null>(null)
+  const [embedVideoName, setEmbedVideoName] = useState<string>("")
 
   useEffect(() => {
-    fetch('/api/videos')
+    fetch("/api/videos")
       .then(res => res.json())
       .then(data => {
-        const readyVideos = data.filter((v: any) => v.status === 'ready')
+        const readyVideos = data.filter((v: any) => v.status === "ready")
         setVideos(readyVideos)
       })
-      .catch(err => console.error('Error fetching videos:', err))
+      .catch(err => console.error("Error fetching videos:", err))
   }, [])
 
   const formatTime = (seconds: number) => {
@@ -144,13 +148,22 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
   const formShowTime = videoConfig?.form_show_time_seconds || 1500
   const timeStr = formatTime(formShowTime)
 
+  const openEmbedForVideo = (id: string | null | undefined) => {
+    if (!id) return
+    const video = videos.find((v) => v.id === id)
+    if (!video) return
+    setEmbedVideoId(video.id)
+    setEmbedVideoName(video.name || video.id)
+    setEmbedOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <Label htmlFor="primary_video">Основное видео</Label>
         <Select
           id="primary_video"
-          value={videoConfig?.primary_video_id || ''}
+          value={videoConfig?.primary_video_id || ""}
           onChange={(e) => onUpdate({ primary_video_id: e.target.value || null })}
           className="mt-2"
         >
@@ -161,13 +174,22 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
             </option>
           ))}
         </Select>
+        {videoConfig?.primary_video_id && (
+          <button
+            type="button"
+            className="mt-2 text-xs text-blue-400 hover:underline"
+            onClick={() => openEmbedForVideo(videoConfig.primary_video_id)}
+          >
+            Получить embed-код
+          </button>
+        )}
       </div>
 
       <div>
         <Label htmlFor="secondary_video">Второе видео (после формы)</Label>
         <Select
           id="secondary_video"
-          value={videoConfig?.secondary_video_id || ''}
+          value={videoConfig?.secondary_video_id || ""}
           onChange={(e) => onUpdate({ secondary_video_id: e.target.value || null })}
           className="mt-2"
         >
@@ -178,6 +200,15 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
             </option>
           ))}
         </Select>
+        {videoConfig?.secondary_video_id && (
+          <button
+            type="button"
+            className="mt-2 text-xs text-blue-400 hover:underline"
+            onClick={() => openEmbedForVideo(videoConfig.secondary_video_id)}
+          >
+            Получить embed-код
+          </button>
+        )}
       </div>
 
       <div>
@@ -362,6 +393,14 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
           </div>
         )}
       </div>
+      {embedVideoId && (
+        <VideoEmbedModal
+          videoId={embedVideoId}
+          videoName={embedVideoName}
+          open={embedOpen}
+          onClose={() => setEmbedOpen(false)}
+        />
+      )}
     </div>
   )
 }

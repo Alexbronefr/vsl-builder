@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Trash2, RefreshCw } from 'lucide-react'
+import { Trash2, RefreshCw, Clipboard, Check, Code } from 'lucide-react'
 import { format } from 'date-fns'
+import { VideoEmbedModal } from '@/components/admin/video-embed-modal'
 
 interface Video {
   id: string
@@ -25,6 +26,9 @@ interface VideosTableProps {
 export function VideosTable({ videos: initialVideos }: VideosTableProps) {
   const [videos, setVideos] = useState(initialVideos)
   const [refreshing, setRefreshing] = useState(false)
+  const [embedVideo, setEmbedVideo] = useState<Video | null>(null)
+  const [embedOpen, setEmbedOpen] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Автообновление каждые 5 секунд для видео в процессе конвертации
   useEffect(() => {
@@ -62,6 +66,23 @@ export function VideosTable({ videos: initialVideos }: VideosTableProps) {
     } finally {
       setRefreshing(false)
     }
+  }
+
+  const handleCopyId = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id)
+      setCopiedId(id)
+      setTimeout(() => {
+        setCopiedId(null)
+      }, 2000)
+    } catch (e) {
+      console.error('Clipboard error:', e)
+    }
+  }
+
+  const handleOpenEmbed = (video: Video) => {
+    setEmbedVideo(video)
+    setEmbedOpen(true)
   }
 
   const getStatusBadge = (video: Video) => {
@@ -155,6 +176,9 @@ export function VideosTable({ videos: initialVideos }: VideosTableProps) {
                   Статус
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
+                  Embed
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
                   Длительность
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
@@ -196,6 +220,36 @@ export function VideosTable({ videos: initialVideos }: VideosTableProps) {
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
+                    {video.status === 'ready' ? (
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyId(video.id)}
+                          className="text-gray-300 hover:text-white"
+                          title="Копировать Video ID"
+                        >
+                          {copiedId === video.id ? (
+                            <Check className="h-4 w-4 text-green-400" />
+                          ) : (
+                            <Clipboard className="h-4 w-4" />
+                          )}
+                        </button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => handleOpenEmbed(video)}
+                        >
+                          <Code className="mr-1 h-3 w-3" />
+                          {'</>'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     {formatDuration(video.duration_seconds)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
@@ -223,6 +277,14 @@ export function VideosTable({ videos: initialVideos }: VideosTableProps) {
             </tbody>
           </table>
         </div>
+      )}
+      {embedVideo && (
+        <VideoEmbedModal
+          videoId={embedVideo.id}
+          videoName={embedVideo.name}
+          open={embedOpen}
+          onClose={() => setEmbedOpen(false)}
+        />
       )}
     </div>
   )
