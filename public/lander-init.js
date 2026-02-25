@@ -1850,16 +1850,21 @@
             console.warn('[External Lead API] Поле email не найдено в данных формы. Доступные поля:', Object.keys(data));
           }
           
-          // Если нашли поле имени, добавляем его как 'first_name' и 'firstname' (для совместимости)
+          // Если нашли поле имени, добавляем его во всех возможных вариантах (для максимальной совместимости с разными API)
           if (firstNameValue) {
             const firstNameFieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === firstNameFieldName; });
+            // Добавляем все возможные варианты имен полей для имени
             externalPayload.first_name = firstNameValue;
-            externalPayload.firstname = firstNameValue; // Альтернативный вариант без подчеркивания
+            externalPayload.firstname = firstNameValue;
+            externalPayload.name = firstNameValue; // Просто 'name' (многие API ожидают именно так)
+            externalPayload['first name'] = firstNameValue; // С пробелом
+            externalPayload.nome = firstNameValue; // Португальский вариант
+            externalPayload.nombre = firstNameValue; // Испанский вариант
             console.log('[External Lead API] Найдено поле имени:', {
               original_field: firstNameFieldName,
               label: firstNameFieldConfig?.label || 'N/A',
               value: firstNameValue,
-              added_as: 'first_name и firstname'
+              added_as: 'first_name, firstname, name, first name, nome, nombre'
             });
           } else {
             console.warn('[External Lead API] Поле имени (first_name) не найдено в данных формы. Доступные поля:', Object.keys(data));
@@ -1871,16 +1876,23 @@
             }
           }
           
-          // Если нашли поле фамилии, добавляем его как 'last_name' и 'lastname' (для совместимости)
+          // Если нашли поле фамилии, добавляем его во всех возможных вариантах (для максимальной совместимости с разными API)
           if (lastNameValue) {
             const lastNameFieldConfig = lander.form_config?.fields?.find(function(f) { return f.name === lastNameFieldName; });
+            // Добавляем все возможные варианты имен полей для фамилии
             externalPayload.last_name = lastNameValue;
-            externalPayload.lastname = lastNameValue; // Альтернативный вариант без подчеркивания
+            externalPayload.lastname = lastNameValue;
+            externalPayload.surname = lastNameValue;
+            externalPayload.family_name = lastNameValue;
+            externalPayload.familyname = lastNameValue;
+            externalPayload['last name'] = lastNameValue; // С пробелом (на случай если API ожидает именно так)
+            externalPayload.sobrenome = lastNameValue; // Португальский вариант
+            externalPayload.apellido = lastNameValue; // Испанский вариант
             console.log('[External Lead API] Найдено поле фамилии:', {
               original_field: lastNameFieldName,
               label: lastNameFieldConfig?.label || 'N/A',
               value: lastNameValue,
-              added_as: 'last_name и lastname'
+              added_as: 'last_name, lastname, surname, family_name, familyname, last name, sobrenome, apellido'
             });
           } else {
             console.warn('[External Lead API] Поле фамилии (last_name) не найдено в данных формы. Доступные поля:', Object.keys(data));

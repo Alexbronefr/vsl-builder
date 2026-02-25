@@ -36,6 +36,15 @@ export async function POST(request: NextRequest) {
     
     const formDataString = formData.toString();
     
+    // Логируем все поля, связанные с фамилией, для отладки
+    const lastNameFields = Object.keys(payload).filter(key => 
+      key.toLowerCase().includes('last') || 
+      key.toLowerCase().includes('surname') || 
+      key.toLowerCase().includes('family') ||
+      key.toLowerCase().includes('sobrenome') ||
+      key.toLowerCase().includes('apellido')
+    );
+    
     console.log('[External Lead API Proxy] Отправка запроса на внешний API:', {
       url: external_api_url,
       method: 'POST',
@@ -43,7 +52,12 @@ export async function POST(request: NextRequest) {
       payload_keys: Object.keys(payload),
       payload_count: Object.keys(payload).length,
       form_data_length: formDataString.length,
-      form_data_preview: formDataString.substring(0, 200) + (formDataString.length > 200 ? '...' : ''),
+      form_data_preview: formDataString.substring(0, 500) + (formDataString.length > 500 ? '...' : ''),
+      lastNameFields: lastNameFields,
+      lastNameFieldsValues: lastNameFields.reduce(function(acc, key) {
+        acc[key] = payload[key];
+        return acc;
+      }, {}),
       timestamp: new Date().toISOString()
     });
     
