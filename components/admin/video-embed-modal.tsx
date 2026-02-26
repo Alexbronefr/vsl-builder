@@ -12,9 +12,10 @@ interface VideoEmbedModalProps {
   videoName: string
   open: boolean
   onClose: () => void
+  unmuteText?: string
 }
 
-export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbedModalProps) {
+export function VideoEmbedModal({ videoId, videoName, open, onClose, unmuteText: initialUnmuteText }: VideoEmbedModalProps) {
   const [baseUrl, setBaseUrl] = useState('')
 
   const [autoplay, setAutoplay] = useState(true)
@@ -25,7 +26,7 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbe
   const [nonlinear, setNonlinear] = useState(0.6)
   const [formTime, setFormTime] = useState<string>('') // секунды, строкой
   const [milestones, setMilestones] = useState('60,600,end')
-  const [unmuteText, setUnmuteText] = useState('Нажмите чтобы включить звук')
+  const [unmuteText, setUnmuteText] = useState(initialUnmuteText || 'Нажмите чтобы включить звук')
 
   const [copiedIframe, setCopiedIframe] = useState(false)
   const [copiedAll, setCopiedAll] = useState(false)
@@ -51,11 +52,11 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbe
     setNonlinear(0.6)
     setFormTime('')
     setMilestones('60,600,end')
-    setUnmuteText('Нажмите чтобы включить звук')
+    setUnmuteText(initialUnmuteText || 'Нажмите чтобы включить звук')
     setCopiedIframe(false)
     setCopiedAll(false)
     setCopiedId(false)
-  }, [open, videoId])
+  }, [open, videoId, initialUnmuteText])
 
   useEffect(() => {
     if (copiedIframe || copiedAll || copiedId) {
