@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Пример Embed VSL + Форма</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: #0f172a;
+      color: #e5e7eb;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    iframe {
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+    }
+    .form-block {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      background-color: #020617;
+      border: 1px solid #1f2937;
+    }
+    .form-block h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .field input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      box-sizing: border-box;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #ef4444;
+      box-shadow: 0 0 0 1px #ef4444;
+    }
+    button[type="submit"] {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 9999px;
+      border: none;
+      background: #ef4444;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover {
+      background: #dc2626;
+    }
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Пример встраиваемого VSL‑плеера + форма ФИО</h1>
+
+    <!-- IFRAME С ТВОИМИ НАСТРОЙКАМИ -->
+    <iframe
+      id="vsl-player"
+      src="https://vsl-builder-phi.vercel.app/embed/d355c8b7-7301-4abf-9957-d7e98dcc3c8b?controls=true&autoplay=true&muted=true&color=EF4444&blockSeek=true&nonlinear=0.6&milestones=60%2C600%2Cend"
+      allow="autoplay; encrypted-media"
+      allowfullscreen
+      style="width:100%;aspect-ratio:16/9;border:none;"
+    ></iframe>
+
+    <!-- ФОРМА ФИО ПОД ПЛЕЕРОМ -->
+    <div class="form-block" id="lead-form-block">
+      <h2>Оставьте свои данные</h2>
+      <form id="lead-form">
+        <div class="field">
+          <label for="fullName">ФИО</label>
+          <input id="fullName" name="fullName" type="text" placeholder="Иванов Иван Иванович" required />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <button type="submit">Отправить</button>
+        <div class="hint" id="form-hint">
+          Форма появится автоматически, когда видео дойдёт до нужного момента (если настроен formTime).
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- СЛУШАТЕЛЬ СОБЫТИЙ ОТ ПЛЕЕРА -->
+  <script>
+    // Слушаем события от iframe-плеера
+    window.addEventListener('message', function (event) {
+      var d = event.data;
+      if (!d || d.source !== 'vsl-player') return;
+
+      switch (d.type) {
+        case 'video:ready':
+          console.log('[PARENT] Video ready, duration:', d.data && d.data.duration);
+          break;
+
+        case 'video:form-show':
+          console.log('[PARENT] video:form-show, time:', d.data && d.data.time);
+          // Здесь можно, например, снять скрытие/blur с формы
+          var block = document.getElementById('lead-form-block');
+          var hint = document.getElementById('form-hint');
+          if (block) {
+            block.classList.remove('hidden');
+          }
+          if (hint) {
+            hint.textContent = 'Форма доступна — заполните свои данные.';
+          }
+          break;
+
+        case 'video:milestone':
+          console.log('[PARENT] Milestone:', d.data && d.data.milestone, 'time:', d.data && d.data.time);
+          break;
+
+        case 'video:ended':
+          console.log('[PARENT] Video ended, duration:', d.data && d.data.duration);
+          break;
+
+        case 'video:timeupdate':
+          // d.data.time, d.data.percent, d.data.duration
+          // console.log('[PARENT] timeupdate', d.data);
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    // Пример обработки отправки формы
+    document.getElementById('lead-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fullName = (document.getElementById('fullName').value || '').trim();
+      var email = (document.getElementById('email').value || '').trim();
+
+      console.log('[PARENT] Submit lead:', { fullName: fullName, email: email });
+
+      alert('Спасибо! Данные отправлены (демо).');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
+

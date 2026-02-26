@@ -48,6 +48,10 @@
     }
 
     var options = config.options || {}
+    // В iframe используем КАСТОМНЫЕ контролы, а не нативные,
+    // чтобы повторить поведение оригинального лендинга:
+    // скрытая длительность, нелинейный прогресс, блок перемотки и т.д.
+    // Параметр controls оставляем только как флаг на будущее.
     var controls = !!options.controls
     var autoplay = !!options.autoplay
     var muted = !!options.muted
@@ -66,6 +70,166 @@
     var firedMilestones = {}
     var formShown = false
     var maxWatched = 0
+
+    // Отключаем нативные контролы, чтобы не показывать длительность и стандартный прогрессбар
+    video.controls = false
+    // Создаём кастомные контролы (похожи на lander-init.js, но без завязки на landerConfig)
+    createCustomControls()
+
+    function createCustomControls() {
+      var wrapper = document.getElementById('embed-wrapper')
+      if (!wrapper || !video) {
+        console.warn('[Embed] Wrapper for custom controls not found')
+        return
+      }
+
+      var controlsContainer = document.createElement('div')
+      controlsContainer.id = 'embed-custom-controls'
+      controlsContainer.style.cssText =
+        'position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);' +
+        'padding:16px 20px;display:flex;align-items:center;gap:14px;z-index:20;box-sizing:border-box;'
+
+      // Прогресс-бар
+      var progressBar = document.createElement('div')
+      progressBar.id = 'embed-progress-bar'
+      progressBar.style.cssText =
+        'flex:1;position:relative;cursor:pointer;padding:6px 0;height:20px;display:flex;align-items:center;'
+
+      var progressTrack = document.createElement('div')
+      progressTrack.id = 'embed-progress-track'
+      progressTrack.style.cssText =
+        'width:100%;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;position:relative;overflow:hidden;transition:height 0.2s ease;'
+
+      var progressBuffer = document.createElement('div')
+      progressBuffer.id = 'embed-progress-buffer'
+      progressBuffer.style.cssText =
+        'position:absolute;top:0;left:0;height:100%;width:0%;background:rgba(255,255,255,0.25);border-radius:2px;transition:width 0.2s;z-index:1;'
+
+      var progressFill = document.createElement('div')
+      progressFill.id = 'embed-progress-fill'
+      progressFill.style.cssText =
+        'position:absolute;top:0;left:0;height:100%;width:0%;background:#EF4444;border-radius:2px;transition:width 0.1s;' +
+        'box-shadow:0 0 8px rgba(239,68,68,0.5);z-index:2;'
+
+      progressTrack.appendChild(progressBuffer)
+      progressTrack.appendChild(progressFill)
+      progressBar.appendChild(progressTrack)
+
+      // Только ТЕКУЩЕЕ время (без общей длительности, чтобы не светить длину ролика)
+      var timeDisplay = document.createElement('span')
+      timeDisplay.id = 'embed-elapsed-time'
+      timeDisplay.style.cssText = 'color:white;font-size:13px;min-width:46px;text-align:right;'
+      timeDisplay.textContent = '00:00'
+
+      // Кнопка Play/Pause
+      var playPauseBtn = document.createElement('button')
+      playPauseBtn.id = 'embed-play-pause'
+      playPauseBtn.innerHTML = '▶'
+      playPauseBtn.style.cssText =
+        'background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px 6px;'
+
+      controlsContainer.appendChild(progressBar)
+      controlsContainer.appendChild(timeDisplay)
+      controlsContainer.appendChild(playPauseBtn)
+      wrapper.appendChild(controlsContainer)
+
+      function formatTime(seconds) {
+        var mins = Math.floor(seconds / 60)
+        var secs = Math.floor(seconds % 60)
+        return mins + ':' + String(secs).padStart(2, '0')
+      }
+
+      function updateProgressUI() {
+        if (!video || !video.duration) return
+
+        var pf = document.getElementById('embed-progress-fill')
+        var td = document.getElementById('embed-elapsed-time')
+        if (!pf) return
+
+        var raw = video.currentTime / video.duration
+        if (raw < 0) raw = 0
+        if (raw > 1) raw = 1
+
+        // Нелинейный прогресс (как на лендинге)
+        var exponent = nonlinear || 1
+        var value = Math.pow(raw, exponent)
+        if (value < 0) value = 0
+        if (value > 1) value = 1
+
+        pf.style.width = String(value * 100) + '%'
+        if (td) td.textContent = formatTime(video.currentTime || 0)
+      }
+
+      function updateBufferUI() {
+        if (!video || !video.duration || !video.buffered || !video.buffered.length) return
+        var pb = document.getElementById('embed-progress-buffer')
+        if (!pb) return
+
+        var bufferedEnd = 0
+        try {
+          for (var i = 0; i < video.buffered.length; i++) {
+            var end = video.buffered.end(i)
+            if (end > bufferedEnd) bufferedEnd = end
+          }
+        } catch (e) {
+          return
+        }
+
+        var percent = (bufferedEnd / video.duration) * 100
+        if (percent < 0) percent = 0
+        if (percent > 100) percent = 100
+        pb.style.width = String(percent) + '%'
+      }
+
+      // Обновление прогресса / буфера
+      video.addEventListener('timeupdate', updateProgressUI)
+      video.addEventListener('progress', updateBufferUI)
+
+      // Hover-эффект
+      progressBar.addEventListener('mouseenter', function () {
+        progressTrack.style.height = '6px'
+        progressFill.style.boxShadow = '0 0 12px rgba(239,68,68,0.7)'
+      })
+      progressBar.addEventListener('mouseleave', function () {
+        progressTrack.style.height = '4px'
+        progressFill.style.boxShadow = '0 0 8px rgba(239,68,68,0.5)'
+      })
+
+      // Клик по прогресс-бару
+      progressBar.addEventListener('click', function (e) {
+        if (!video.duration) return
+        var rect = progressTrack.getBoundingClientRect()
+        var clickPercent = (e.clientX - rect.left) / rect.width
+        if (clickPercent < 0) clickPercent = 0
+        if (clickPercent > 1) clickPercent = 1
+        var clickTime = clickPercent * video.duration
+
+        if (blockSeek) {
+          // Запрещаем перемотку дальше максимально просмотренной точки
+          if (clickTime <= maxWatched + 0.5) {
+            video.currentTime = clickTime
+          }
+        } else {
+          video.currentTime = clickTime
+        }
+      })
+
+      // Кнопка play/pause
+      playPauseBtn.addEventListener('click', function () {
+        if (video.paused) {
+          video.play().catch(function () {})
+        } else {
+          video.pause()
+        }
+      })
+
+      video.addEventListener('play', function () {
+        playPauseBtn.innerHTML = '⏸'
+      })
+      video.addEventListener('pause', function () {
+        playPauseBtn.innerHTML = '▶'
+      })
+    }
 
     // ====== HLS PLAYER SETUP ======
     function setupHls() {

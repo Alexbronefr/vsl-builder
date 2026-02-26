@@ -96,6 +96,7 @@ export default async function EmbedPage({ params, searchParams }: EmbedPageProps
             position: 'relative',
             backgroundColor: '#000000',
           }}
+          id="embed-wrapper"
         >
           <video
             id="embed-player"
