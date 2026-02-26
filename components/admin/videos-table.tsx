@@ -284,6 +284,8 @@ export function VideosTable({ videos: initialVideos }: VideosTableProps) {
           videoName={embedVideo.name}
           open={embedOpen}
           onClose={() => setEmbedOpen(false)}
+          // Для модалки из списка видео используем дефолтный текст кнопки включения звука
+          unmuteText="Нажмите чтобы включить звук"
         />
       )}
     </div>

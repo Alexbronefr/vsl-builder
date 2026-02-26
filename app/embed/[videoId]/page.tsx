@@ -58,6 +58,11 @@ export default async function EmbedPage({ params, searchParams }: EmbedPageProps
   const nonlinear = parseNumber(searchParams.nonlinear) ?? 1
   const blockSeek = parseBoolean(searchParams.blockSeek, false)
 
+  const unmuteTextRaw = Array.isArray(searchParams.unmuteText)
+    ? searchParams.unmuteText[0]
+    : searchParams.unmuteText
+  const unmuteText = typeof unmuteTextRaw === 'string' ? unmuteTextRaw : undefined
+
   const embedConfig = {
     videoId: video.id,
     hlsManifestUrl: video.hls_manifest_url,
@@ -71,6 +76,7 @@ export default async function EmbedPage({ params, searchParams }: EmbedPageProps
       formTime,
       nonlinear,
       blockSeek,
+      unmuteText,
     },
   }
 

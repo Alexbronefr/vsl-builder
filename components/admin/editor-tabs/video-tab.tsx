@@ -346,18 +346,33 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
                 className="w-full h-auto rounded-lg border border-gray-700"
               />
             </div>
-            <div>
-              <Label htmlFor="gif_preview_text">Текст на GIF-превью</Label>
-              <Input
-                id="gif_preview_text"
-                value={videoConfig?.gif_preview_text || 'Нажмите чтобы включить звук'}
-                onChange={(e) => onUpdate({ gif_preview_text: e.target.value })}
-                placeholder="Нажмите чтобы включить звук"
-                className="mt-2"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Текст, который отображается поверх GIF-превью
-              </p>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="gif_preview_text">Текст на GIF-превью</Label>
+                <Input
+                  id="gif_preview_text"
+                  value={videoConfig?.gif_preview_text || 'Нажмите чтобы включить звук'}
+                  onChange={(e) => onUpdate({ gif_preview_text: e.target.value })}
+                  placeholder="Нажмите чтобы включить звук"
+                  className="mt-2"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Текст, который отображается поверх GIF-превью
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="embed_unmute_text">Текст кнопки включения звука в embed-плеере</Label>
+                <Input
+                  id="embed_unmute_text"
+                  value={videoConfig?.embed_unmute_text || 'Нажмите чтобы включить звук'}
+                  onChange={(e) => onUpdate({ embed_unmute_text: e.target.value })}
+                  placeholder="Нажмите чтобы включить звук"
+                  className="mt-2"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Этот текст будет показываться поверх видео во встраиваемом плеере (iframe) до включения звука.
+                </p>
+              </div>
             </div>
             <Button
               type="button"
@@ -399,6 +414,7 @@ export function VideoTab({ videoConfig, onUpdate }: VideoTabProps) {
           videoName={embedVideoName}
           open={embedOpen}
           onClose={() => setEmbedOpen(false)}
+          unmuteText={videoConfig?.embed_unmute_text || videoConfig?.gif_preview_text || 'Нажмите чтобы включить звук'}
         />
       )}
     </div>

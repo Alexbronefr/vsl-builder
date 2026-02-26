@@ -12,9 +12,10 @@ interface VideoEmbedModalProps {
   videoName: string
   open: boolean
   onClose: () => void
+  unmuteText?: string
 }
 
-export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbedModalProps) {
+export function VideoEmbedModal({ videoId, videoName, open, onClose, unmuteText }: VideoEmbedModalProps) {
   const [baseUrl, setBaseUrl] = useState('')
 
   const [autoplay, setAutoplay] = useState(true)
@@ -76,6 +77,9 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbe
     url.searchParams.set('blockSeek', String(blockSeek))
     url.searchParams.set('nonlinear', String(nonlinear || 0.6))
     url.searchParams.set('milestones', milestones || '60,600,end')
+    if (unmuteText && unmuteText.trim() !== '') {
+      url.searchParams.set('unmuteText', unmuteText.trim())
+    }
     if (formTime.trim() !== '') {
       url.searchParams.set('formTime', formTime.trim())
     }
@@ -87,7 +91,7 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbe
   allowfullscreen
   style="width:100%;aspect-ratio:16/9;border:none;">
 </iframe>`
-  }, [baseUrl, videoId, controls, autoplay, muted, color, blockSeek, nonlinear, milestones, formTime])
+  }, [baseUrl, videoId, controls, autoplay, muted, color, blockSeek, nonlinear, milestones, formTime, unmuteText])
 
   const listenerCode = useMemo(
     () =>

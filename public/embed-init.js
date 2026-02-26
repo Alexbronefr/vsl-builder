@@ -59,11 +59,14 @@
     var blockSeek = !!options.blockSeek
     var milestones = parseMilestones(options.milestones || [])
     var formTime = typeof options.formTime === 'number' && !isNaN(options.formTime) ? options.formTime : null
+    var unmuteText =
+      options.unmuteText && typeof options.unmuteText === 'string' && options.unmuteText.trim()
+        ? options.unmuteText.trim()
+        : 'Нажмите чтобы включить звук'
 
-    // Apply basic options
+    // Apply basic options (нативные контролы сразу отключаем чуть ниже)
     video.controls = controls
     video.muted = muted
-
     var duration = 0
     var lastTimeUpdateSent = 0
     var TIMEUPDATE_INTERVAL = 5 // seconds
@@ -132,6 +135,32 @@
       controlsContainer.appendChild(timeDisplay)
       controlsContainer.appendChild(playPauseBtn)
       wrapper.appendChild(controlsContainer)
+
+      // Оверлей "Нажмите чтобы включить звук" поверх видео (как на лендинге, но для iframe)
+      var overlay = document.createElement('div')
+      overlay.id = 'embed-unmute-overlay'
+      overlay.style.cssText =
+        'position:absolute;inset:0;display:' +
+        (muted ? 'flex' : 'none') +
+        ';align-items:center;justify-content:center;background:rgba(0,0,0,0.45);cursor:pointer;z-index:25;'
+
+      var overlayBtn = document.createElement('button')
+      overlayBtn.textContent = unmuteText
+      overlayBtn.style.cssText =
+        'padding:12px 20px;border-radius:9999px;border:none;background:#EF4444;color:#fff;font-weight:600;' +
+        'font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);display:inline-flex;align-items:center;' +
+        'justify-content:center;max-width:90%;text-align:center;'
+
+      overlay.appendChild(overlayBtn)
+      wrapper.appendChild(overlay)
+
+      function hideOverlay() {
+        overlay.style.display = 'none'
+      }
+
+      function showOverlay() {
+        overlay.style.display = 'flex'
+      }
 
       function formatTime(seconds) {
         var mins = Math.floor(seconds / 60)
@@ -228,6 +257,40 @@
       })
       video.addEventListener('pause', function () {
         playPauseBtn.innerHTML = '▶'
+      })
+
+      // Клик по оверлею: включаем звук, разворачиваем видео на весь экран и запускаем воспроизведение
+      overlay.addEventListener('click', function () {
+        try {
+          video.muted = false
+        } catch (e) {}
+
+        hideOverlay()
+
+        // Пытаемся развернуть wrapper (или видео) на весь экран
+        var fsTarget = wrapper || video
+        if (fsTarget && fsTarget.requestFullscreen) {
+          fsTarget.requestFullscreen().catch(function () {})
+        } else if (fsTarget && fsTarget.webkitRequestFullscreen) {
+          fsTarget.webkitRequestFullscreen()
+        } else if (fsTarget && fsTarget.mozRequestFullScreen) {
+          fsTarget.mozRequestFullScreen()
+        } else if (fsTarget && fsTarget.msRequestFullscreen) {
+          fsTarget.msRequestFullscreen()
+        }
+
+        if (video.paused) {
+          video.play().catch(function () {})
+        }
+      })
+
+      // Если звук включили каким-то другим способом — прячем оверлей
+      video.addEventListener('volumechange', function () {
+        if (video.muted) {
+          showOverlay()
+        } else {
+          hideOverlay()
+        }
       })
     }
 
@@ -439,6 +502,11 @@
           break
         case 'unmute':
           video.muted = false
+          // При внешней команде unmute тоже убираем оверлей
+          var ov = document.getElementById('embed-unmute-overlay')
+          if (ov) {
+            ov.style.display = 'none'
+          }
           break
         case 'seek':
           if (typeof data.time === 'number' && !isNaN(data.time)) {
