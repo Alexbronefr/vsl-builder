@@ -12,10 +12,9 @@ interface VideoEmbedModalProps {
   videoName: string
   open: boolean
   onClose: () => void
-  unmuteText?: string
 }
 
-export function VideoEmbedModal({ videoId, videoName, open, onClose, unmuteText }: VideoEmbedModalProps) {
+export function VideoEmbedModal({ videoId, videoName, open, onClose }: VideoEmbedModalProps) {
   const [baseUrl, setBaseUrl] = useState('')
 
   const [autoplay, setAutoplay] = useState(true)
@@ -26,6 +25,7 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose, unmuteText 
   const [nonlinear, setNonlinear] = useState(0.6)
   const [formTime, setFormTime] = useState<string>('') // секунды, строкой
   const [milestones, setMilestones] = useState('60,600,end')
+  const [unmuteText, setUnmuteText] = useState('Нажмите чтобы включить звук')
 
   const [copiedIframe, setCopiedIframe] = useState(false)
   const [copiedAll, setCopiedAll] = useState(false)
@@ -51,6 +51,7 @@ export function VideoEmbedModal({ videoId, videoName, open, onClose, unmuteText 
     setNonlinear(0.6)
     setFormTime('')
     setMilestones('60,600,end')
+    setUnmuteText('Нажмите чтобы включить звук')
     setCopiedIframe(false)
     setCopiedAll(false)
     setCopiedId(false)
@@ -274,6 +275,18 @@ window.addEventListener('message', function(event) {
                 />
                 <p className="mt-1 text-[11px] text-gray-500">
                   Через запятую, в секундах. &quot;end&quot; = конец видео (событие video:milestone).
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm">Текст кнопки включения звука</Label>
+                <Input
+                  value={unmuteText}
+                  onChange={(e) => setUnmuteText(e.target.value)}
+                  placeholder="Нажмите чтобы включить звук"
+                  className="mt-1 text-xs"
+                />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Этот текст показывается поверх видео в iframe. По клику звук включится, а плеер развернётся на весь экран.
                 </p>
               </div>
             </div>
