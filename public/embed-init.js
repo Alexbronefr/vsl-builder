@@ -131,9 +131,23 @@
       playPauseBtn.style.cssText =
         'background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px 6px;'
 
+      var fullscreenExpandSvg =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>'
+      var fullscreenShrinkSvg =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>'
+
+      var fullscreenBtn = document.createElement('button')
+      fullscreenBtn.setAttribute('type', 'button')
+      fullscreenBtn.setAttribute('aria-label', 'Полноэкранный режим')
+      fullscreenBtn.id = 'embed-fullscreen'
+      fullscreenBtn.innerHTML = fullscreenExpandSvg
+      fullscreenBtn.style.cssText =
+        'background:none;border:none;color:white;cursor:pointer;padding:4px 6px;display:flex;align-items:center;justify-content:center;'
+
       controlsContainer.appendChild(progressBar)
       controlsContainer.appendChild(timeDisplay)
       controlsContainer.appendChild(playPauseBtn)
+      controlsContainer.appendChild(fullscreenBtn)
       wrapper.appendChild(controlsContainer)
 
       // Оверлей "Нажмите чтобы включить звук" поверх видео (как на лендинге, но для iframe)
@@ -183,36 +197,41 @@
         exitFullscreen()
       })
 
-      // Кнопка «Выйти из полноэкранного» в правом нижнем углу — видна только в fullscreen, звук не трогаем
-      var exitFullscreenBtn = document.createElement('button')
-      exitFullscreenBtn.setAttribute('type', 'button')
-      exitFullscreenBtn.setAttribute('aria-label', 'Выйти из полноэкранного режима')
-      exitFullscreenBtn.textContent = '×'
-      exitFullscreenBtn.id = 'embed-exit-fullscreen'
-      exitFullscreenBtn.style.cssText =
-        'position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;border:none;' +
-        'background:rgba(0,0,0,0.5);color:#fff;font-size:28px;line-height:1;cursor:pointer;' +
-        'display:none;align-items:center;justify-content:center;z-index:30;padding:0;'
-      wrapper.appendChild(exitFullscreenBtn)
-
-      function updateExitFullscreenBtnVisibility() {
-        var inFs = !!(
+      function isFullscreen() {
+        return !!(
           document.fullscreenElement ||
           document.webkitFullscreenElement ||
           document.mozFullScreenElement ||
           document.msFullscreenElement
         )
-        exitFullscreenBtn.style.display = inFs ? 'flex' : 'none'
+      }
+
+      function requestFullscreen() {
+        var el = wrapper || video
+        if (!el) return
+        if (el.requestFullscreen) el.requestFullscreen().catch(function () {})
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen()
+        else if (el.msRequestFullscreen) el.msRequestFullscreen()
+      }
+
+      function updateFullscreenIcon() {
+        fullscreenBtn.innerHTML = isFullscreen() ? fullscreenShrinkSvg : fullscreenExpandSvg
+        fullscreenBtn.setAttribute('aria-label', isFullscreen() ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим')
       }
 
       ;['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(
         function (ev) {
-          document.addEventListener(ev, updateExitFullscreenBtnVisibility)
+          document.addEventListener(ev, updateFullscreenIcon)
         }
       )
 
-      exitFullscreenBtn.addEventListener('click', function () {
-        exitFullscreen()
+      fullscreenBtn.addEventListener('click', function () {
+        if (isFullscreen()) {
+          exitFullscreen()
+        } else {
+          requestFullscreen()
+        }
       })
 
       function hideOverlay() {
