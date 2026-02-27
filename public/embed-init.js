@@ -165,37 +165,8 @@
         'font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);display:inline-flex;align-items:center;' +
         'justify-content:center;max-width:90%;text-align:center;'
 
-      var closeOverlayBtn = document.createElement('button')
-      closeOverlayBtn.setAttribute('type', 'button')
-      closeOverlayBtn.setAttribute('aria-label', 'Выйти из полноэкранного режима')
-      closeOverlayBtn.textContent = '×'
-      closeOverlayBtn.style.cssText =
-        'position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;border:none;' +
-        'background:rgba(0,0,0,0.5);color:#fff;font-size:28px;line-height:1;cursor:pointer;' +
-        'display:flex;align-items:center;justify-content:center;z-index:26;padding:0;'
-
       overlay.appendChild(overlayBtn)
-      overlay.appendChild(closeOverlayBtn)
       wrapper.appendChild(overlay)
-
-      function exitFullscreen() {
-        var doc = document
-        if (doc.fullscreenElement) {
-          doc.exitFullscreen().catch(function () {})
-        } else if (doc.webkitFullscreenElement) {
-          doc.webkitExitFullscreen()
-        } else if (doc.mozFullScreenElement) {
-          doc.mozCancelFullScreen()
-        } else if (doc.msFullscreenElement) {
-          doc.msExitFullscreen()
-        }
-      }
-
-      closeOverlayBtn.addEventListener('click', function (e) {
-        e.stopPropagation()
-        hideOverlay()
-        exitFullscreen()
-      })
 
       function isFullscreen() {
         return !!(
