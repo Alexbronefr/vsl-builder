@@ -186,6 +186,19 @@
         else if (el.msRequestFullscreen) el.msRequestFullscreen()
       }
 
+      function exitFullscreen() {
+        var doc = document
+        if (doc.exitFullscreen) {
+          doc.exitFullscreen().catch(function () {})
+        } else if (doc.webkitExitFullscreen) {
+          doc.webkitExitFullscreen()
+        } else if (doc.mozCancelFullScreen) {
+          doc.mozCancelFullScreen()
+        } else if (doc.msExitFullscreen) {
+          doc.msExitFullscreen()
+        }
+      }
+
       function updateFullscreenIcon() {
         fullscreenBtn.innerHTML = isFullscreen() ? fullscreenShrinkSvg : fullscreenExpandSvg
         fullscreenBtn.setAttribute('aria-label', isFullscreen() ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим')
@@ -196,6 +209,9 @@
           document.addEventListener(ev, updateFullscreenIcon)
         }
       )
+
+      // Инициализируем иконку в исходном состоянии
+      updateFullscreenIcon()
 
       fullscreenBtn.addEventListener('click', function () {
         if (isFullscreen()) {
