@@ -310,7 +310,7 @@
         playPauseBtn.innerHTML = '▶'
       })
 
-      // Клик по оверлею: включаем звук, разворачиваем видео на весь экран и запускаем воспроизведение
+      // Клик по оверлею: включаем звук, разворачиваем видео на весь экран и запускаем воспроизведение С НАЧАЛА
       overlay.addEventListener('click', function () {
         try {
           video.muted = false
@@ -330,9 +330,11 @@
           fsTarget.msRequestFullscreen()
         }
 
-        if (video.paused) {
-          video.play().catch(function () {})
-        }
+        try {
+          video.currentTime = 0
+        } catch (e) {}
+
+        video.play().catch(function () {})
       })
 
       // Если звук включили каким-то другим способом — прячем оверлей
