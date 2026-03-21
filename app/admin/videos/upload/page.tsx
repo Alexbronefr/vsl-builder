@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, X, FileVideo } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import * as tus from 'tus-js-client'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024 // 5GB
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
@@ -142,77 +143,84 @@ export default function UploadVideoPage() {
       const uploadStartTime = Date.now()
       const fileSizeMB = (file.size / 1024 / 1024).toFixed(2)
       console.log('[Client] Размер файла:', `${fileSizeMB} MB`)
-      console.log('[Client] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-      console.log('[Client] Supabase Key присутствует:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
       
-      // Проверяем, что Supabase клиент создан правильно
       if (!supabase) {
         throw new Error('Supabase клиент не инициализирован. Проверьте переменные окружения NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.')
       }
-      
-      // Для больших файлов (>100MB) используем multipart upload
-      const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100MB
-      
-      let uploadData: any
-      let uploadError: any
-      
-      try {
-        if (file.size > LARGE_FILE_THRESHOLD) {
-          console.log('[Client] Большой файл, используем multipart upload...')
-          // Используем upload с опцией для больших файлов
-          const result = await supabase.storage
-            .from('raw-videos')
-            .upload(filePath, file, {
+
+      const LARGE_FILE_THRESHOLD = 50 * 1024 * 1024 // 50MB — используем TUS resumable для больших файлов
+      const { data: { session } } = await supabase.auth.getSession()
+      const useTus = file.size > LARGE_FILE_THRESHOLD && !!session?.access_token
+
+      let uploadData: { path: string }
+
+      if (useTus) {
+        // TUS resumable upload — разбивает на чанки 6MB, выдерживает обрывы соединения
+        console.log('[Client] Большой файл, используем TUS resumable upload...')
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+        const projectRef = supabaseUrl.replace(/^https:\/\//, '').replace(/\.supabase\.co.*$/, '')
+        const tusEndpoint = `https://${projectRef}.storage.supabase.co/storage/v1/upload/resumable`
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+        uploadData = await new Promise<{ path: string }>((resolve, reject) => {
+          const upload = new tus.Upload(file, {
+            endpoint: tusEndpoint,
+            retryDelays: [0, 3000, 5000, 10000, 20000],
+            headers: {
+              authorization: `Bearer ${session!.access_token}`,
+              apikey: anonKey,
+            },
+            uploadDataDuringCreation: true,
+            removeFingerprintOnSuccess: true,
+            chunkSize: 6 * 1024 * 1024, // 6MB — требуемый Supabase
+            metadata: {
+              bucketName: 'raw-videos',
+              objectName: filePath,
+              contentType: file.type || 'video/mp4',
               cacheControl: '3600',
-              upsert: false,
-              contentType: file.type,
-              // Для больших файлов Supabase автоматически использует multipart upload
-            })
-          uploadData = result.data
-          uploadError = result.error
-        } else {
-          // Для небольших файлов обычная загрузка
-          console.log('[Client] Обычная загрузка для файла <100MB...')
-          const result = await supabase.storage
-            .from('raw-videos')
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false,
-              contentType: file.type,
-            })
-          uploadData = result.data
-          uploadError = result.error
-        }
-      } catch (uploadException: any) {
-        console.error('[Client] Исключение при загрузке в Storage:', {
-          error: uploadException,
-          message: uploadException.message,
-          name: uploadException.name,
-          stack: uploadException.stack,
+            },
+            onError: (err) => {
+              console.error('[Client] Ошибка TUS загрузки:', err)
+              reject(new Error(err?.message || 'Ошибка resumable загрузки'))
+            },
+            onProgress: (bytesUploaded, bytesTotal) => {
+              const pct = Math.round((bytesUploaded / bytesTotal) * 90) + 5
+              setProgress(Math.min(pct, 95))
+            },
+            onSuccess: () => {
+              resolve({ path: filePath })
+            },
+          })
+          upload.start()
         })
-        throw new Error(`Ошибка загрузки в Supabase Storage: ${uploadException.message || 'Unknown error'}. Проверьте консоль браузера (F12 → Network) и убедитесь, что Supabase Storage bucket 'raw-videos' существует и настроен правильно.`)
+      } else {
+        if (file.size > LARGE_FILE_THRESHOLD && !session) {
+          throw new Error('Для загрузки файлов больше 50MB необходима сессия. Обновите страницу (F5), войдите снова и попробуйте ещё раз.')
+        }
+        // Стандартная загрузка для небольших файлов
+        console.log('[Client] Обычная загрузка для файла <50MB...')
+        const result = await supabase.storage
+          .from('raw-videos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          })
+        if (result.error) {
+          console.error('[Client] Ошибка загрузки в Storage:', result.error)
+          if (result.error.message?.includes('exceeded') || result.error.message?.includes('maximum')) {
+            throw new Error('Размер файла превышает максимально допустимый. Supabase Free: макс 50MB. Нужен Pro для больших файлов.')
+          }
+          if (result.error.message?.includes('Failed to fetch') || result.error.message?.includes('NetworkError') || result.error.message?.includes('Connection')) {
+            throw new Error('Ошибка сети при загрузке. Для файлов >50MB используйте стабильное соединение. Возможно, нужен план Supabase Pro.')
+          }
+          throw new Error(result.error.message || 'Ошибка загрузки в Storage')
+        }
+        uploadData = result.data
       }
 
       const uploadTime = Date.now() - uploadStartTime
-      const uploadSpeed = file.size / uploadTime / 1024 // KB/s
-
-      if (uploadError) {
-        console.error('[Client] Ошибка загрузки в Storage:', {
-          error: uploadError,
-          message: uploadError.message,
-          statusCode: uploadError.statusCode,
-          errorCode: uploadError.error,
-        })
-        // Более детальное сообщение об ошибке
-        if (uploadError.message?.includes('exceeded') || uploadError.message?.includes('maximum')) {
-          throw new Error('Размер файла превышает максимально допустимый. Убедитесь, что файл меньше 5GB и что bucket настроен правильно.')
-        }
-        if (uploadError.message?.includes('Failed to fetch') || uploadError.message?.includes('NetworkError')) {
-          throw new Error('Ошибка сети при загрузке. Проверьте подключение к интернету и консоль браузера (F12 → Network) для деталей. Возможно, проблема с CORS или таймаутом.')
-        }
-        throw new Error(uploadError.message || `Ошибка загрузки в Storage (код: ${uploadError.statusCode || 'unknown'})`)
-      }
-
+      const uploadSpeed = file.size / uploadTime / 1024
       console.log('[Client] Загрузка завершена:', {
         time: `${(uploadTime / 1000).toFixed(2)}s`,
         speed: `${uploadSpeed.toFixed(2)} KB/s`,

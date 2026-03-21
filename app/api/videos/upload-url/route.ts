@@ -60,10 +60,6 @@ export async function POST(request: NextRequest) {
       filePath,
     })
 
-    // Вернуть путь для прямой загрузки
-    // Клиент будет загружать напрямую в Supabase Storage
-    console.log('[Video Upload] Готово к загрузке. Ожидание загрузки файла с клиента...')
-    
     console.log('[API /upload-url] ✅ Успешно, возвращаем данные:', {
       videoId: video.id,
       filePath,
